@@ -15,7 +15,7 @@ class _BronScreenState extends State<BronScreen> {
       decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/images/фон2.jpg'),
-          fit: BoxFit.contain,
+          fit: BoxFit.cover,
         ),
       ),
       child: Scaffold(
@@ -42,7 +42,12 @@ class _BronScreenState extends State<BronScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () {
+                              Navigator.push(
+                                context, 
+                                MaterialPageRoute(builder: (BuildContext context) => PagesScreen())
+                              );
+                            },
                             child: Text(
                               'Главная',
                               style: TextStyle(

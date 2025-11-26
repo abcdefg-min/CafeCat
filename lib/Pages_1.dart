@@ -57,7 +57,7 @@ class _PagesScreenState extends State<PagesScreen> {
                       style: TextStyle(
                         fontSize: MediaQuery.of(context).size.width > 600
                             ? 30
-                            : 15,
+                            : 20,
                         color: Color.fromARGB(255, 255, 252, 231),
                       ),
                     ),
@@ -85,17 +85,17 @@ class _PagesScreenState extends State<PagesScreen> {
                         textStyle: TextStyle(
                           fontSize: MediaQuery.of(context).size.width > 600
                               ? 30
-                              : 16,
+                              : 25,
                         ),
                         backgroundColor: Color.fromARGB(255, 255, 252, 231),
                         elevation: 5,
                         padding: EdgeInsets.symmetric(
                           horizontal: MediaQuery.of(context).size.width > 600
                               ? 25
-                              : 10,
+                              : 20,
                           vertical: MediaQuery.of(context).size.width > 600
                               ? 30
-                              : 15,
+                              : 25,
                         ),
                       ),
                     ),
@@ -117,7 +117,7 @@ class _PagesScreenState extends State<PagesScreen> {
       child: Container(
         padding: EdgeInsets.symmetric(
           horizontal: isMobile ? 20 : 20,
-          vertical: isMobile ? 20 : 20,
+          vertical: isMobile ? 30 : 20,
         ),
         color: Color(0xFF3A2B28),
         child: Row(
@@ -125,8 +125,8 @@ class _PagesScreenState extends State<PagesScreen> {
           children: [
             Image.asset(
               'assets/images/logo.png',
-              width: isMobile ? 35 : 50,
-              height: isMobile ? 35 : 50,
+              width: isMobile ? 45 : 50,
+              height: isMobile ? 45 : 50,
             ),
 
             Expanded(
