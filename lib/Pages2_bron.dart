@@ -186,7 +186,9 @@ class _BronScreenState extends State<BronScreen> {
                   Padding(padding: EdgeInsets.all(40)),
                   Container(
                     child: ElevatedButton(
-                      onPressed: _showAlertDialog,
+                      onPressed: _showDialogOne,
+
+                      //текст
                       child: Text(
                         'ДАЛЕЕ',
                         style: TextStyle(color: Color(0xFF3A2B28)),
@@ -214,113 +216,154 @@ class _BronScreenState extends State<BronScreen> {
     );
   }
 
-  void _showAlertDialog() {
+
+  void _showDialogOne() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(
-            'Форма брони',
-            style: TextStyle(
-              fontSize: 40,
-              color: Color.fromARGB(255, 255, 252, 231),
-            ),
-          ),
-          content: SizedBox(
+        return Dialog(
+          backgroundColor: Color.fromARGB(214, 58, 43, 40),
+          child: Container(
+            height: 500,
             width: 900,
-            height: 400,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                //поле для ввода даты
-                Padding(padding: EdgeInsets.all(20)),
-                SizedBox(
-                  width: 900,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Color.fromARGB(255, 255, 252, 231),
-                          width: 3.0,
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Color(0xFF3A2B28),
-                          width: 3.0,
-                        ),
-                      ),
-                      hintText: "Имя",
-                      hintStyle: TextStyle(
-                        color: Color.fromARGB(255, 255, 252, 231),
-                      ),
-                    ),
+                Padding(padding: EdgeInsets.only(top: 40)),
+                Text(
+                  'Форма брони',
+                  style: TextStyle(
+                    fontSize: 40,
+                    color: Color.fromARGB(255, 255, 252, 231),
                   ),
                 ),
-
-                //поле для ввода времени
-                Padding(padding: EdgeInsets.all(20)),
                 SizedBox(
-                  width: 900,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Color.fromARGB(255, 255, 252, 231),
-                          width: 3.0,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      //поле для ввода даты
+                      Padding(padding: EdgeInsets.all(20)),
+                      SizedBox(
+                        width: 700,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Color.fromARGB(255, 255, 252, 231),
+                                width: 3.0,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Color(0xFF3A2B28),
+                                width: 3.0,
+                              ),
+                            ),
+                            hintText: "Имя",
+                            hintStyle: TextStyle(
+                              color: Color.fromARGB(255, 255, 252, 231),
+                            ),
+                          ),
                         ),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Color(0xFF3A2B28),
-                          width: 3.0,
-                        ),
-                      ),
-                      hintText: "Время",
-                      hintStyle: TextStyle(
-                        color: Color.fromARGB(255, 255, 252, 231),
-                      ),
-                    ),
-                  ),
-                ),
 
-                //поле для ввода кл-ва гостей
-                Padding(padding: EdgeInsets.all(20)),
-                SizedBox(
-                  width: 900,
-                  child: TextField(
-                    decoration: InputDecoration(
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Color.fromARGB(255, 255, 252, 231),
-                          width: 3.0,
+                      //поле для ввода времени
+                      Padding(padding: EdgeInsets.all(20)),
+                      SizedBox(
+                        width: 700,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Color.fromARGB(255, 255, 252, 231),
+                                width: 3.0,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Color(0xFF3A2B28),
+                                width: 3.0,
+                              ),
+                            ),
+                            hintText: "Время",
+                            hintStyle: TextStyle(
+                              color: Color.fromARGB(255, 255, 252, 231),
+                            ),
+                          ),
                         ),
                       ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(
-                          color: Color(0xFF3A2B28),
-                          width: 3.0,
+
+                      //поле для ввода кл-ва гостей
+                      Padding(padding: EdgeInsets.all(20)),
+                      SizedBox(
+                        width: 700,
+                        child: TextField(
+                          decoration: InputDecoration(
+                            enabledBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Color.fromARGB(255, 255, 252, 231),
+                                width: 3.0,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderSide: BorderSide(
+                                color: Color(0xFF3A2B28),
+                                width: 3.0,
+                              ),
+                            ),
+                            hintText: "Количество гостей",
+                            hintStyle: TextStyle(
+                              color: Color.fromARGB(255, 255, 252, 231),
+                            ),
+                          ),
                         ),
                       ),
-                      hintText: "Количество гостей",
-                      hintStyle: TextStyle(
-                        color: Color.fromARGB(255, 255, 252, 231),
+
+                      Padding(padding: EdgeInsets.all(30)),
+                      Container(
+                        child: ElevatedButton(
+                          onPressed: _showDialogTwo,
+                          child: Text(
+                            'ДАЛЕЕ',
+                            style: TextStyle(color: Color(0xFF3A2B28)),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            textStyle: TextStyle(fontSize: 30),
+                            backgroundColor: Color.fromARGB(255, 255, 252, 231),
+                            elevation: 5,
+                            padding: EdgeInsets.only(
+                              top: 20,
+                              bottom: 20,
+                              left: 40,
+                              right: 40,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ],
             ),
           ),
-          backgroundColor: Color.fromARGB(188, 58, 43, 40),
-          actions: [
-            Center(
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Text('ДАЛЕЕ', style: TextStyle(fontSize: 25)),
-              ),
+        );
+      },
+    );
+  }
+
+  //2 диалоговое окно для выбора доступного столика
+  void _showDialogTwo() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          backgroundColor: Color.fromARGB(214, 58, 43, 40),
+          child: Container(
+            height: 500,
+            width: 900,
+            child: Center(
+              child: Text("Выбор доступного столика"),
             ),
-          ],
+          ),
         );
       },
     );
