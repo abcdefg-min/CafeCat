@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'Pages2_bron.dart';
 import 'SiteHeader.dart';
+import 'Pages3_cat.dart';
 
 class PagesScreen extends StatefulWidget {
   const PagesScreen({super.key});
@@ -121,20 +122,6 @@ class _PagesScreenState extends State<PagesScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, bool isMobile) {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 20 : 20,
-          vertical: isMobile ? 30 : 20,
-        ),
-      ),
-    );
-  }
-
   Widget _dialogMenu(BuildContext context) {
     return Drawer(
       child: ListView(
@@ -157,8 +144,12 @@ class _PagesScreenState extends State<PagesScreen> {
           ListTile(title: Text('О нас'), onTap: () => Navigator.pop(context)),
 
           ListTile(
-            title: Text('Поддержать'),
-            onTap: () => Navigator.pop(context),
+            title: Text('Котики'),
+            onTap: () {
+              Navigator.push(context, 
+              MaterialPageRoute(builder: (context) => CatScreen())
+              );
+            },
           ),
           ListTile(title: Text('Меню'), onTap: () => Navigator.pop(context)),
           ListTile(

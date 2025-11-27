@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'Pages_1.dart';
 import 'SiteHeader.dart';
 
 class BronScreen extends StatefulWidget {
@@ -380,7 +379,7 @@ class _BronScreenState extends State<BronScreen> {
           ListTile(title: Text('О нас'), onTap: () => Navigator.pop(context)),
 
           ListTile(
-            title: Text('Поддержать'),
+            title: Text('Котики'),
             onTap: () => Navigator.pop(context),
           ),
           ListTile(title: Text('Меню'), onTap: () => Navigator.pop(context)),
