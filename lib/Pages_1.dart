@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Pages2_bron.dart';
+import 'SiteHeader.dart';
 
 class PagesScreen extends StatefulWidget {
   const PagesScreen({super.key});
@@ -9,6 +10,8 @@ class PagesScreen extends StatefulWidget {
 }
 
 class _PagesScreenState extends State<PagesScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
@@ -22,12 +25,22 @@ class _PagesScreenState extends State<PagesScreen> {
       ),
 
       child: Scaffold(
+        key: _scaffoldKey,
         drawer: _dialogMenu(context),
         backgroundColor: Colors.transparent,
         body: Stack(
           children: [
-            _buildHeader(context, isMobile),
-
+            Positioned(
+              top: 0,
+              right: 0,
+              left: 0,
+              child: HeaderSite(
+                isMobile: isMobile,
+                onMenuTap: () {
+                  _scaffoldKey.currentState?.openDrawer();
+                },
+              ),
+            ),
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -67,37 +80,36 @@ class _PagesScreenState extends State<PagesScreen> {
                       MediaQuery.of(context).size.width > 600 ? 70 : 30,
                     ),
                   ),
-                  Container(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (BuildContext context) => BronScreen(),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'ЗАБРОНИРОВАТЬ',
-                        style: TextStyle(color: Color(0xFF3A2B28)),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        textStyle: TextStyle(
-                          fontSize: MediaQuery.of(context).size.width > 600
-                              ? 30
-                              : 25,
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (BuildContext context) => BronScreen(),
                         ),
-                        backgroundColor: Color.fromARGB(255, 255, 252, 231),
-                        elevation: 5,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: MediaQuery.of(context).size.width > 600
-                              ? 25
-                              : 20,
-                          vertical: MediaQuery.of(context).size.width > 600
-                              ? 30
-                              : 25,
-                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      textStyle: TextStyle(
+                        fontSize: MediaQuery.of(context).size.width > 600
+                            ? 30
+                            : 25,
                       ),
+
+                      backgroundColor: Color.fromARGB(255, 255, 252, 231),
+                      elevation: 5,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: MediaQuery.of(context).size.width > 600
+                            ? 25
+                            : 20,
+                        vertical: MediaQuery.of(context).size.width > 600
+                            ? 30
+                            : 25,
+                      ),
+                    ),
+                    child: Text(
+                      'ЗАБРОНИРОВАТЬ',
+                      style: TextStyle(color: Color(0xFF3A2B28)),
                     ),
                   ),
                 ],
@@ -118,57 +130,6 @@ class _PagesScreenState extends State<PagesScreen> {
         padding: EdgeInsets.symmetric(
           horizontal: isMobile ? 20 : 20,
           vertical: isMobile ? 30 : 20,
-        ),
-        color: Color(0xFF3A2B28),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Image.asset(
-              'assets/images/logo.png',
-              width: isMobile ? 45 : 50,
-              height: isMobile ? 45 : 50,
-            ),
-
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (!isMobile) ...[
-                    _menuButton('Главная', isMobile),
-                    _menuButton('О нас', isMobile),
-                    _menuButton('Поддержать', isMobile),
-                    _menuButton('Меню', isMobile),
-                    _menuButton('Контакты', isMobile),
-                  ]
-                ],
-              ),
-            ),
-            if (isMobile)
-              Builder(
-                builder: (context) => IconButton(
-                  onPressed: () {
-                    Scaffold.of(context).openDrawer();
-                  },
-                  icon: Icon(Icons.menu, color: Color.fromARGB(255, 255, 252, 231)),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _menuButton(String title, bool isMobile) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 20),
-      child: TextButton(
-        onPressed: () {},
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: isMobile ? 15 : 20,
-            color: Color.fromARGB(255, 255, 252, 231),
-          ),
         ),
       ),
     );

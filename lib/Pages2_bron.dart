@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'Pages_1.dart';
+import 'SiteHeader.dart';
 
 class BronScreen extends StatefulWidget {
   const BronScreen({super.key});
@@ -9,8 +10,12 @@ class BronScreen extends StatefulWidget {
 }
 
 class _BronScreenState extends State<BronScreen> {
+  late final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
     return Container(
       decoration: BoxDecoration(
         image: DecorationImage(
@@ -19,92 +24,20 @@ class _BronScreenState extends State<BronScreen> {
         ),
       ),
       child: Scaffold(
+        key: _scaffoldKey,
         backgroundColor: Colors.transparent,
+        drawer: _dialogMenu(context),
         body: Stack(
           children: [
             Positioned(
               top: 0,
               left: 0,
               right: 0,
-              child: Container(
-                padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-                color: Color(0xFF3A2B28),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Image.asset(
-                      'assets/images/logo.png',
-                      width: 50,
-                      height: 50,
-                    ),
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context, 
-                                MaterialPageRoute(builder: (BuildContext context) => PagesScreen())
-                              );
-                            },
-                            child: Text(
-                              'Главная',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Color.fromARGB(255, 255, 252, 231),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 40),
-                          TextButton(
-                            onPressed: () {},
-                            child: Text(
-                              'О нас',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Color.fromARGB(255, 255, 252, 231),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 40),
-                          TextButton(
-                            onPressed: () {},
-                            child: Text(
-                              'Поддержать',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Color.fromARGB(255, 255, 252, 231),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 40),
-                          TextButton(
-                            onPressed: () {},
-                            child: Text(
-                              'Меню',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Color.fromARGB(255, 255, 252, 231),
-                              ),
-                            ),
-                          ),
-                          SizedBox(width: 40),
-                          TextButton(
-                            onPressed: () {},
-                            child: Text(
-                              'Контакты',
-                              style: TextStyle(
-                                fontSize: 20,
-                                color: Color.fromARGB(255, 255, 252, 231),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+              child: HeaderSite(
+                isMobile: isMobile,
+                onMenuTap: () {
+                  _scaffoldKey.currentState?.openDrawer();
+                },
               ),
             ),
 
@@ -419,6 +352,41 @@ class _BronScreenState extends State<BronScreen> {
                 style: TextStyle(color: Color(0xFF3A2B28)),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _dialogMenu(BuildContext context) {
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          DrawerHeader(
+            decoration: BoxDecoration(color: Color(0xFF3A2B28)),
+            child: Image.asset(
+              'assets/images/logo.png',
+              width: 100,
+              height: 100,
+            ),
+          ),
+          ListTile(
+            title: Text('Главная'),
+            onTap: () {
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(title: Text('О нас'), onTap: () => Navigator.pop(context)),
+
+          ListTile(
+            title: Text('Поддержать'),
+            onTap: () => Navigator.pop(context),
+          ),
+          ListTile(title: Text('Меню'), onTap: () => Navigator.pop(context)),
+          ListTile(
+            title: Text('Контакты'),
+            onTap: () => Navigator.pop(context),
           ),
         ],
       ),
