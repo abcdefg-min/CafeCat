@@ -146,6 +146,7 @@ class _BronScreenState extends State<BronScreen> {
                         'ДАЛЕЕ',
                         style: TextStyle(color: Color(0xFF3A2B28)),
                       ),
+                      
                     ),
                   ),
                 ],
@@ -224,7 +225,7 @@ class _BronScreenState extends State<BronScreen> {
                         width: 3.0,
                       ),
                     ),
-                    hintText: "Имя",
+                    hintText: "Дата",
                     hintStyle: TextStyle(
                       color: Color.fromARGB(255, 255, 252, 231),
                     ),
