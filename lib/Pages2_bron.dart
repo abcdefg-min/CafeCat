@@ -47,13 +47,18 @@ class _BronScreenState extends State<BronScreen> {
                 children: [
                   Text(
                     'Форма бронирования',
-                    style: TextStyle(fontSize: 50, color: Color(0xFF3A2B28)),
+                    style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width < 600
+                          ? 30
+                          : 50,
+                      color: Color(0xFF3A2B28),
+                    ),
                   ),
 
                   //поле для ввода имени
                   Padding(padding: EdgeInsets.all(20)),
                   SizedBox(
-                    width: 900,
+                    width: MediaQuery.of(context).size.width < 900 ? 300 : 900,
                     child: TextField(
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
@@ -76,7 +81,7 @@ class _BronScreenState extends State<BronScreen> {
                   //поле для ввода телефона
                   Padding(padding: EdgeInsets.all(20)),
                   SizedBox(
-                    width: 900,
+                    width: MediaQuery.of(context).size.width < 900 ? 300 : 900,
                     child: TextField(
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
@@ -99,7 +104,7 @@ class _BronScreenState extends State<BronScreen> {
                   //поле для ввода почты
                   Padding(padding: EdgeInsets.all(20)),
                   SizedBox(
-                    width: 900,
+                    width: MediaQuery.of(context).size.width < 900 ? 300 : 900,
                     child: TextField(
                       decoration: InputDecoration(
                         enabledBorder: OutlineInputBorder(
@@ -164,8 +169,8 @@ class _BronScreenState extends State<BronScreen> {
             return Dialog(
               backgroundColor: Color.fromARGB(214, 58, 43, 40),
               child: Container(
-                height: 600,
-                width: 900,
+                height: MediaQuery.of(context).size.width < 900 ? 550 : 600,
+                width: MediaQuery.of(context).size.width < 900 ? 600 : 800,
                 padding: EdgeInsets.all(20),
                 child: step == 0
                     ? _showDialogOne(() {
@@ -286,7 +291,11 @@ class _BronScreenState extends State<BronScreen> {
                     setState();
                   },
                   style: ElevatedButton.styleFrom(
-                    textStyle: TextStyle(fontSize: 30),
+                    textStyle: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width < 600
+                          ? 20
+                          : 30,
+                    ),
                     backgroundColor: Color.fromARGB(255, 255, 252, 231),
                     elevation: 5,
                     padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
@@ -312,7 +321,7 @@ class _BronScreenState extends State<BronScreen> {
           Text(
             'Выбор доступного столика',
             style: TextStyle(
-              fontSize: 40,
+              fontSize: MediaQuery.of(context).size.width < 600 ? 20 : 40,
               color: Color.fromARGB(255, 255, 252, 231),
             ),
           ),
@@ -341,7 +350,9 @@ class _BronScreenState extends State<BronScreen> {
                 );
               },
               style: ElevatedButton.styleFrom(
-                textStyle: TextStyle(fontSize: 30),
+                textStyle: TextStyle(
+                  fontSize: MediaQuery.of(context).size.width < 600 ? 20 : 30,
+                ),
                 backgroundColor: Color.fromARGB(255, 255, 252, 231),
                 elevation: 5,
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
@@ -378,10 +389,7 @@ class _BronScreenState extends State<BronScreen> {
           ),
           ListTile(title: Text('О нас'), onTap: () => Navigator.pop(context)),
 
-          ListTile(
-            title: Text('Котики'),
-            onTap: () => Navigator.pop(context),
-          ),
+          ListTile(title: Text('Котики'), onTap: () => Navigator.pop(context)),
           ListTile(title: Text('Меню'), onTap: () => Navigator.pop(context)),
           ListTile(
             title: Text('Контакты'),

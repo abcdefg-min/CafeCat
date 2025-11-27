@@ -104,8 +104,8 @@ class _PagesScreenState extends State<PagesScreen> {
                             ? 25
                             : 20,
                         vertical: MediaQuery.of(context).size.width > 600
-                            ? 30
-                            : 25,
+                            ? 20
+                            : 20,
                       ),
                     ),
                     child: Text(
@@ -160,4 +160,6 @@ class _PagesScreenState extends State<PagesScreen> {
       ),
     );
   }
+
+  
 }
