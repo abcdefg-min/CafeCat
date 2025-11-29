@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_cafe/Pages4_menu.dart';
 import 'Pages2_bron.dart';
 import 'SiteHeader.dart';
 import 'Pages3_cat.dart';
+import 'Pages4_menu.dart';
 
 class PagesScreen extends StatefulWidget {
   const PagesScreen({super.key});
@@ -146,12 +148,21 @@ class _PagesScreenState extends State<PagesScreen> {
           ListTile(
             title: Text('Котики'),
             onTap: () {
-              Navigator.push(context, 
-              MaterialPageRoute(builder: (context) => CatScreen())
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => CatScreen()),
               );
             },
           ),
-          ListTile(title: Text('Меню'), onTap: () => Navigator.pop(context)),
+          ListTile(
+            title: Text('Меню'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MenuPagesScreen()),
+              );
+            },
+          ),
           ListTile(
             title: Text('Контакты'),
             onTap: () => Navigator.pop(context),
@@ -160,6 +171,4 @@ class _PagesScreenState extends State<PagesScreen> {
       ),
     );
   }
-
-  
 }

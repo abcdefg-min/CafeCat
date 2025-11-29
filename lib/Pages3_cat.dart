@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_cafe/Pages_1.dart';
 import 'SiteHeader.dart';
+import 'Pages4_menu.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 const double KHeaderHeight = 80.0;
@@ -306,7 +307,15 @@ class _CatScreenState extends State<CatScreen> {
               );
             },
           ),
-          ListTile(title: Text('Меню'), onTap: () => Navigator.pop(context)),
+          ListTile(
+            title: Text('Меню'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => MenuPagesScreen()),
+              );
+            },
+          ),
           ListTile(
             title: Text('Контакты'),
             onTap: () => Navigator.pop(context),
