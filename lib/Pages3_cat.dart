@@ -46,7 +46,7 @@ class _CatScreenState extends State<CatScreen> {
             Builder(
               builder: (context) {
                 final isMobile = MediaQuery.of(context).size.width < 600;
-                final horizontalPadding = isMobile ? 24.0 : 60.0;
+                final horizontalPadding = isMobile ? 24.0 : 120.0;
 
                 final catNames = [
                   'Дин',
@@ -124,7 +124,7 @@ class _CatScreenState extends State<CatScreen> {
                                       width: itemSize,
                                       height: itemSize,
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.85),
+                                        color: const Color.fromARGB(0, 255, 255, 255).withOpacity(0.85),
                                         borderRadius: BorderRadius.circular(14),
                                         boxShadow: [
                                           BoxShadow(
