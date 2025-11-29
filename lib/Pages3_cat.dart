@@ -158,9 +158,9 @@ class _CatScreenState extends State<CatScreen> {
                                                 boxShadow: [
                                                   BoxShadow(
                                                     color: Colors.black
-                                                        .withOpacity(0.1),
-                                                    blurRadius: 6,
-                                                    spreadRadius: 1,
+                                                        .withOpacity(0.2),
+                                                    blurRadius: 15,
+                                                    spreadRadius: 2,
                                                   ),
                                                 ],
                                               ),
@@ -169,6 +169,8 @@ class _CatScreenState extends State<CatScreen> {
                                                     BorderRadius.circular(14),
                                                 child: Image.asset(
                                                   cat['imageUrl'],
+                                                  height: 300,
+                                                  width: double.infinity,
                                                   fit: BoxFit.cover,
                                                 ),
                                               ),
