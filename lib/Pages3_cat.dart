@@ -171,7 +171,7 @@ class _CatScreenState extends State<CatScreen> {
                                                 child: Image.asset(
                                                   cat['imageUrl'],
                                                   height: 300,
-                                                  width: double.infinity,
+                                                  width: 400,
                                                   fit: BoxFit.cover,
                                                 ),
                                               ),

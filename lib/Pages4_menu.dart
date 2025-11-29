@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cafe/SiteHeader.dart';
 import 'Pages_1.dart';
 import 'Pages3_cat.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 const double KHeaderHeight = 80.0;
 
@@ -15,6 +16,41 @@ class MenuPagesScreen extends StatefulWidget {
 class _MenuPagesScreenState extends State<MenuPagesScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
+  List<Map<String, dynamic>> menu = [];
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMenuFromFirestore();
+  }
+
+  Future<void> _loadMenuFromFirestore() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('menu')
+          .get();
+
+      setState(() {
+        menu = snapshot.docs.map((doc) {
+          final data = doc.data();
+          return {
+            'name': (data['name'] ?? '').toString(),
+            'price': (data['price'] ?? '').toString(),
+            'imagesUrl': (data['imagesUrl'] ?? 'assets/images/placeholder.png')
+                .toString(),
+          };
+        }).toList();
+        isLoading = false;
+      });
+    } catch (e) {
+      print('Ошибка загрузки меню: $e');
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
@@ -26,6 +62,7 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
           fit: BoxFit.cover,
         ),
       ),
+
       child: Scaffold(
         key: _scaffoldKey,
         drawer: _dialogMenu(context),
@@ -44,26 +81,92 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
               ),
             ),
 
-            Builder(builder: (context) {
-              final isMobile = MediaQuery.of(context).size.width < 600;
-                final horizontalPadding = isMobile ? 24.0 : 120.0;
-
-                return Padding(
-                  padding: EdgeInsets.only(
-                    top: KHeaderHeight + 80,
-                    left: horizontalPadding,
-                    right: horizontalPadding,
-                    bottom: 20,
+            Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Блюда дня',
+                    style: TextStyle(
+                      fontSize: MediaQuery.of(context).size.width < 600
+                          ? 30
+                          : 50,
+                      color: Color(0xFF3A2B28),
+                    ),
                   ),
 
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text('Меню')
-                    ],
-                  ),
-                );
-            })
+                  //добавить блоки, в которых будут находиться меню
+                  const SizedBox(height: 40),
+
+                  if (isLoading)
+                    CircularProgressIndicator()
+                  else if (menu.isEmpty)
+                    Text('Пока нет блюд в меню')
+                  else
+                    Expanded(
+                      child: GridView.builder(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 20,
+                        ),
+                        itemCount: menu.length,
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: isMobile ? 1 : 3,
+                          crossAxisSpacing: 20,
+                          mainAxisSpacing: 20,
+                          mainAxisExtent: 250,
+                        ),
+                        itemBuilder: (context, index) {
+                          final item = menu[index];
+
+                          return Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(14),
+                                  child: Image.asset(
+                                    item['imagesUrl'],
+                                    height: 300,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.all(10),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item['name'],
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: Color(0xFF3A2B28),
+                                        ),
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 10),
+                                      Text(item['price']),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
       ),

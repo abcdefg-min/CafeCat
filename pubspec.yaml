@@ -32,6 +32,7 @@ flutter:
       - assets/images/фон3.jpg
       - assets/images/столы.png
       - assets/images/cat/
+      - assets/images/menu/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 

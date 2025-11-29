@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'Pages3_cat.dart';
 import 'Pages_1.dart';
+import 'Pages4_menu.dart';
 
 class HeaderSite extends StatelessWidget {
   final bool isMobile;
@@ -44,7 +45,12 @@ class HeaderSite extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => CatScreen())
                     );
                   }, isMobile),
-                  _navButton('Меню', () {}, isMobile),
+                  _navButton('Меню', () {
+                    Navigator.push(
+                      context, 
+                      MaterialPageRoute(builder: (context) => MenuPagesScreen())
+                    );
+                  }, isMobile),
                   _navButton('Контакты', () {}, isMobile),
                 ],
               ),
