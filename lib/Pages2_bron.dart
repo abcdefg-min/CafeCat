@@ -171,8 +171,8 @@ class _BronScreenState extends State<BronScreen> {
             return Dialog(
               backgroundColor: Color.fromARGB(214, 58, 43, 40),
               child: Container(
-                height: MediaQuery.of(context).size.width < 900 ? 550 : 600,
-                width: MediaQuery.of(context).size.width < 900 ? 600 : 800,
+                height: MediaQuery.of(context).size.width < 900 ? 550 : 700,
+                width: MediaQuery.of(context).size.width < 900 ? 600 : 900,
                 padding: EdgeInsets.all(20),
                 child: step == 0
                     ? _showDialogOne(() {
@@ -196,11 +196,11 @@ class _BronScreenState extends State<BronScreen> {
   Widget _showDialogOne(VoidCallback setState) {
     return Column(
       children: [
-        Padding(padding: EdgeInsets.only(top: 40)),
+        Padding(padding: EdgeInsets.only(top: 50)),
         Text(
           'Форма брони',
           style: TextStyle(
-            fontSize: 40,
+            fontSize: MediaQuery.of(context).size.width < 600 ? 40 : 50,
             color: Color.fromARGB(255, 255, 252, 231),
           ),
         ),
@@ -286,7 +286,7 @@ class _BronScreenState extends State<BronScreen> {
                 ),
               ),
 
-              Padding(padding: EdgeInsets.all(30)),
+              Padding(padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 30 : 60)),
               Container(
                 child: ElevatedButton(
                   onPressed: () {
@@ -329,18 +329,19 @@ class _BronScreenState extends State<BronScreen> {
           ),
           Padding(padding: EdgeInsets.only(top: 20)),
           SizedBox(
-            width: 500,
-            height: 300,
+            width: MediaQuery.of(context).size.width < 600 ? 500 : 600,
+            height: MediaQuery.of(context).size.width < 600 ? 250 : 500,
             child: Container(
               decoration: BoxDecoration(
+                //border: Border.all(color: Colors.red, width: 2),
                 image: DecorationImage(
-                  image: AssetImage('assets/images/столы.png'),
+                  image: AssetImage('images/cafe_layout.png'),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
           ),
-          Padding(padding: EdgeInsets.all(30)),
+          Padding(padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 60 : 10,)),
           Container(
             child: ElevatedButton(
               onPressed: () {
@@ -357,11 +358,11 @@ class _BronScreenState extends State<BronScreen> {
                 ),
                 backgroundColor: Color.fromARGB(255, 255, 252, 231),
                 elevation: 5,
-                padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
               ),
               child: Text(
                 'Забронировать',
-                style: TextStyle(color: Color(0xFF3A2B28)),
+                style: TextStyle(color: Color(0xFF3A2B28), fontSize: 23),
               ),
             ),
           ),

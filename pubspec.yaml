@@ -27,6 +27,7 @@ flutter:
 
   assets:
       - assets/images/фон.png
+      - assets/images/cafe_layout.png
       - assets/images/logo.png
       - assets/images/фон2.jpg
       - assets/images/фон3.jpg
