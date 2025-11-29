@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_cafe/SiteHeader.dart';
+import 'package:flutter_cafe/widgets/SiteHeader.dart';
 import 'Pages_1.dart';
 import 'Pages3_cat.dart';
 import 'Pages2_bron.dart';

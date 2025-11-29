@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_cafe/Pages_1.dart';
-import 'SiteHeader.dart';
+import 'widgets/SiteHeader.dart';
 import 'Pages4_menu.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'widgets/SiteFooter.dart';
 
 const double KHeaderHeight = 80.0;
 
@@ -115,7 +116,7 @@ class _CatScreenState extends State<CatScreen> {
                                 builder: (context, constraints) {
                                   final screenWidth = constraints.maxWidth;
                                   final crossAxisCount = screenWidth < 600
-                                      ? 1
+                                      ? 2
                                       : 6;
                                   final itemSpacing = isMobile ? 20.0 : 30.0;
                                   final itemSize =
