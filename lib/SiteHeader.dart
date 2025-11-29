@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_cafe/Pages_grafic.dart';
 import 'Pages3_cat.dart';
 import 'Pages_1.dart';
 import 'Pages4_menu.dart';
@@ -38,7 +39,10 @@ class HeaderSite extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => PagesScreen())
                     );
                   }, isMobile),
-                  _navButton('О нас', () {}, isMobile),
+                  _navButton('График работы', () {
+                    Navigator.push(context, 
+                    MaterialPageRoute(builder: (context) => GraficScreen()));
+                  }, isMobile),
                   _navButton('Котики', () {
                     Navigator.push(
                       context, 

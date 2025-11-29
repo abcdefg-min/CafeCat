@@ -4,6 +4,7 @@ import 'Pages2_bron.dart';
 import 'SiteHeader.dart';
 import 'Pages3_cat.dart';
 import 'Pages4_menu.dart';
+import 'Pages_grafic.dart';
 
 class PagesScreen extends StatefulWidget {
   const PagesScreen({super.key});
@@ -143,7 +144,10 @@ class _PagesScreenState extends State<PagesScreen> {
               Navigator.pop(context);
             },
           ),
-          ListTile(title: Text('О нас'), onTap: () => Navigator.pop(context)),
+          ListTile(title: Text('График работы'), onTap: () {
+            Navigator.push(context, 
+            MaterialPageRoute(builder: (context) => GraficScreen()));
+          }),
 
           ListTile(
             title: Text('Котики'),
