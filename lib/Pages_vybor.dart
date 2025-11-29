@@ -19,25 +19,45 @@ class _VyborScreenState extends State<VyborScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.push(
-                context, 
-                MaterialPageRoute(builder: (context) => AdminScreen())
+                context,
+                MaterialPageRoute(builder: (context) => AdminScreen()),
               );
-            }, 
-            child: Text('Администратор', style: TextStyle(
-              fontSize: 20,
-            ),),
+            },
+            style: ElevatedButton.styleFrom(
+              textStyle: TextStyle(
+                fontSize: MediaQuery.of(context).size.width > 600 ? 30 : 25,
+              ),
+              backgroundColor: Color.fromARGB(255, 255, 252, 231),
+              elevation: 5,
+              foregroundColor: Color(0xFF3A2B28),
+              padding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width > 600 ? 25 : 20,
+                vertical: MediaQuery.of(context).size.width > 600 ? 20 : 20,
+              ),
+            ),
+            child: Text('Администратор', style: TextStyle(fontSize: 30)),
           ),
-
+          SizedBox(height: 30),
           ElevatedButton(
             onPressed: () {
               Navigator.push(
-                context, 
-                MaterialPageRoute(builder: (context) => PagesScreen())
+                context,
+                MaterialPageRoute(builder: (context) => PagesScreen()),
               );
-            }, 
-            child: Text('Клиент', style: TextStyle(
-              fontSize: 20,
-            ),),
+            },
+            style: ElevatedButton.styleFrom(
+              textStyle: TextStyle(
+                fontSize: MediaQuery.of(context).size.width > 600 ? 30 : 25,
+              ),
+              backgroundColor: Color.fromARGB(255, 255, 252, 231),
+              elevation: 5,
+              foregroundColor: Color(0xFF3A2B28),
+              padding: EdgeInsets.symmetric(
+                horizontal: MediaQuery.of(context).size.width > 600 ? 25 : 20,
+                vertical: MediaQuery.of(context).size.width > 600 ? 20 : 20,
+              ),
+            ),
+            child: Text('Клиент', style: TextStyle(fontSize: 30)),
           ),
         ],
       ),
