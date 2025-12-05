@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'widgets/SiteHeader.dart';
 import 'Pages4_menu.dart';
+import 'widgets/SiteFooter.dart';
 
 class BronScreen extends StatefulWidget {
   const BronScreen({super.key});
@@ -16,144 +17,145 @@ class _BronScreenState extends State<BronScreen> {
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
-    return Container(
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/фон2.jpg'),
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Scaffold(
-        key: _scaffoldKey,
-        backgroundColor: Colors.transparent,
-        drawer: _dialogMenu(context),
-        body: Stack(
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: HeaderSite(
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: Color.fromARGB(255, 229, 217, 201),
+      drawer: _dialogMenu(context),
+      body: Container(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              HeaderSite(
                 isMobile: isMobile,
                 onMenuTap: () {
                   _scaffoldKey.currentState?.openDrawer();
                 },
               ),
-            ),
 
-            Padding(padding: EdgeInsets.all(80)),
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Форма бронирования',
-                    style: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width < 600
-                          ? 30
-                          : 50,
-                      color: Color(0xFF3A2B28),
-                    ),
-                  ),
-
-                  //поле для ввода имени
-                  Padding(padding: EdgeInsets.all(20)),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width < 900 ? 300 : 900,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Color.fromARGB(255, 255, 252, 231),
-                            width: 3.0,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Color(0xFF3A2B28),
-                            width: 3.0,
-                          ),
-                        ),
-                        hintText: "Имя",
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 24.0 : 120.0,
+                  vertical: isMobile ? 25.0 : 100.0,
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Форма бронирования',
+                      style: TextStyle(
+                        fontSize: MediaQuery.of(context).size.width < 600
+                            ? 30
+                            : 50,
+                        color: Color(0xFF3A2B28),
                       ),
                     ),
-                  ),
 
-                  //поле для ввода телефона
-                  Padding(padding: EdgeInsets.all(20)),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width < 900 ? 300 : 900,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Color.fromARGB(255, 255, 252, 231),
-                            width: 3.0,
+                    //поле для ввода имени
+                    Padding(padding: EdgeInsets.all(20)),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width < 900
+                          ? 300
+                          : 900,
+                      child: TextField(
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color.fromARGB(255, 255, 252, 231),
+                              width: 3.0,
+                            ),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Color(0xFF3A2B28),
-                            width: 3.0,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color(0xFF3A2B28),
+                              width: 3.0,
+                            ),
                           ),
+                          hintText: "Имя",
                         ),
-                        hintText: "Телефон",
                       ),
                     ),
-                  ),
 
-                  //поле для ввода почты
-                  Padding(padding: EdgeInsets.all(20)),
-                  SizedBox(
-                    width: MediaQuery.of(context).size.width < 900 ? 300 : 900,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        enabledBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Color.fromARGB(255, 255, 252, 231),
-                            width: 3.0,
+                    //поле для ввода телефона
+                    Padding(padding: EdgeInsets.all(20)),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width < 900
+                          ? 300
+                          : 900,
+                      child: TextField(
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color.fromARGB(255, 255, 252, 231),
+                              width: 3.0,
+                            ),
                           ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderSide: BorderSide(
-                            color: Color(0xFF3A2B28),
-                            width: 3.0,
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color(0xFF3A2B28),
+                              width: 3.0,
+                            ),
                           ),
+                          hintText: "Телефон",
                         ),
-                        hintText: "Почта",
                       ),
                     ),
-                  ),
 
-                  //КНОПКА "ДАЛЕЕ"
-                  Padding(padding: EdgeInsets.all(40)),
-                  Container(
-                    child: ElevatedButton(
-                      onPressed: _showDialogOneTwo,
-
-                      style: ElevatedButton.styleFrom(
-                        textStyle: TextStyle(fontSize: 30),
-                        backgroundColor: Color.fromARGB(255, 255, 252, 231),
-                        elevation: 5,
-                        padding: EdgeInsets.only(
-                          top: 20,
-                          bottom: 20,
-                          left: 40,
-                          right: 40,
+                    //поле для ввода почты
+                    Padding(padding: EdgeInsets.all(20)),
+                    SizedBox(
+                      width: MediaQuery.of(context).size.width < 900
+                          ? 300
+                          : 900,
+                      child: TextField(
+                        decoration: InputDecoration(
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color.fromARGB(255, 255, 252, 231),
+                              width: 3.0,
+                            ),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Color(0xFF3A2B28),
+                              width: 3.0,
+                            ),
+                          ),
+                          hintText: "Почта",
                         ),
                       ),
-                      //текст
-                      child: Text(
-                        'ДАЛЕЕ',
-                        style: TextStyle(color: Color(0xFF3A2B28)),
-                      ),
-                      
                     ),
-                  ),
-                ],
+
+                    //КНОПКА "ДАЛЕЕ"
+                    Padding(padding: EdgeInsets.all(40)),
+                    Container(
+                      child: ElevatedButton(
+                        onPressed: _showDialogOneTwo,
+
+                        style: ElevatedButton.styleFrom(
+                          textStyle: TextStyle(fontSize: 30),
+                          backgroundColor: Color.fromARGB(255, 255, 252, 231),
+                          elevation: 5,
+                          padding: EdgeInsets.only(
+                            top: 20,
+                            bottom: 20,
+                            left: 40,
+                            right: 40,
+                          ),
+                        ),
+                        //текст
+                        child: Text(
+                          'ДАЛЕЕ',
+                          style: TextStyle(color: Color(0xFF3A2B28)),
+                        ),
+                      ),
+                    ),
+                    SizedBox(height: 100),
+                  ],
+                ),
               ),
-            ),
-          ],
+              FooterScreen(),
+            ],
+          ),
         ),
       ),
     );
@@ -286,7 +288,11 @@ class _BronScreenState extends State<BronScreen> {
                 ),
               ),
 
-              Padding(padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 30 : 60)),
+              Padding(
+                padding: EdgeInsets.all(
+                  MediaQuery.of(context).size.width < 600 ? 30 : 60,
+                ),
+              ),
               Container(
                 child: ElevatedButton(
                   onPressed: () {
@@ -330,7 +336,7 @@ class _BronScreenState extends State<BronScreen> {
           Padding(padding: EdgeInsets.only(top: 20)),
           SizedBox(
             width: MediaQuery.of(context).size.width < 600 ? 500 : 600,
-            height: MediaQuery.of(context).size.width < 600 ? 250 : 500,
+            height: MediaQuery.of(context).size.width < 600 ? 250 : 480,
             child: Container(
               decoration: BoxDecoration(
                 //border: Border.all(color: Colors.red, width: 2),
@@ -341,7 +347,11 @@ class _BronScreenState extends State<BronScreen> {
               ),
             ),
           ),
-          Padding(padding: EdgeInsets.all(MediaQuery.of(context).size.width < 600 ? 60 : 10,)),
+          Padding(
+            padding: EdgeInsets.all(
+              MediaQuery.of(context).size.width < 600 ? 60 : 10,
+            ),
+          ),
           Container(
             child: ElevatedButton(
               onPressed: () {

@@ -21,12 +21,13 @@ Widget _WidgetDesktop(BuildContext context) {
     child: Column(
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Column(
               children: [
                 Image.asset('assets/images/logo.png', width: 60),
                 SizedBox(height: 10),
+                Padding(padding: EdgeInsets.symmetric(horizontal: 100)),
                 Text(
                   'Котокафе "Утренний кот"',
                   style: TextStyle(color: Colors.white, fontSize: 14),
@@ -50,6 +51,7 @@ Widget _WidgetDesktop(BuildContext context) {
                 ),
               ],
             ),
+            
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -66,7 +68,9 @@ Widget _WidgetDesktop(BuildContext context) {
                   style: TextStyle(color: Colors.white, fontSize: 14),
                 ),
               ],
+              
             ),
+
           ],
         ),
         SizedBox(height: 30),
@@ -81,7 +85,7 @@ Widget _WidgetDesktop(BuildContext context) {
 
 Widget _WidgetMobile(BuildContext context) {
   return Container(
-    padding: EdgeInsets.all(20),
+    padding: EdgeInsets.all(50),
     color: Color(0xFF3A2B28),
     child: Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -97,6 +101,7 @@ Widget _WidgetMobile(BuildContext context) {
           ],
         ),
         SizedBox(height: 15),
+        
         Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
