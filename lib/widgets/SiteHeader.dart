@@ -3,7 +3,6 @@ import '../Pages3_cat.dart';
 import '../Pages_1.dart';
 import '../Pages4_menu.dart';
 import '../Pages5_contact.dart';
-import '../sections/Pages_contact.dart';
 
 class HeaderSite extends StatelessWidget {
   final bool isMobile;

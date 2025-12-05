@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'widgets/SiteFooter.dart';
 import 'widgets/SiteHeader.dart';
 import 'Pages_1.dart';
-import 'Pages2_bron.dart';
 import 'Pages3_cat.dart';
 import 'Pages4_menu.dart';
 

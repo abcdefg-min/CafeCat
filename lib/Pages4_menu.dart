@@ -15,6 +15,30 @@ class MenuPagesScreen extends StatefulWidget {
   State<MenuPagesScreen> createState() => _MenuPagesScreenState();
 }
 
+class Dish {
+  final String id;
+  final String name;
+  final String price;
+  final String imagesUrl;
+
+  Dish({
+    required this.id,
+    required this.name,
+    required this.price,
+    required this.imagesUrl,
+  });
+
+  factory Dish.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Dish(
+      id: doc.id,
+      name: data['name'] as String,
+      price: data['price'] as String,
+      imagesUrl: data['imagesUrl'] as String,
+    );
+  }
+}
+
 class _MenuPagesScreenState extends State<MenuPagesScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
@@ -29,21 +53,45 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
 
   Future<void> _loadMenuFromFirestore() async {
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('menu')
-          .get();
+      final today = DateTime.now();
+      final dateStr =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+      // 1. Получаем документ с меню на сегодня
+      final menuDocRef = FirebaseFirestore.instance
+          .collection('dailyMenus')
+          .doc(dateStr);
+      final menuDoc = await menuDocRef.get();
+
+      if (!menuDoc.exists) {
+        // Меню на сегодня не сгенерировано — генерируем
+        await _generateTodayMenu();
+        // Перезагружаем
+        return _loadMenuFromFirestore();
+      }
+
+      // 2. Получаем список ID блюд
+      final dishIds = List<String>.from(menuDoc.data()!['dishesOfDay']);
+
+      // 3. Загружаем сами блюда
+      final futures = dishIds.map(
+        (id) => FirebaseFirestore.instance.collection('dishes').doc(id).get(),
+      );
+      final docs = await Future.wait(futures);
 
       setState(() {
-        menu = snapshot.docs.map((doc) {
-          final data = doc.data();
+        menu = docs.map((doc) {
+          final dish = Dish.fromFirestore(doc);
           return {
-            'name': (data['name'] as String?) ?? 'Без названия',
-            'price': (data['price'] as String?) ?? 'Цена не указана',
-            'imagesUrl':
-                (data['imagesUrl'] as String?) ??
-                'assets/images/placeholder.png',
+            'name': dish.name,
+            'price': dish.price,
+            'imagesUrl': dish.imagesUrl,
           };
         }).toList();
+        print('Загружено блюд: ${menu.length}');
+        for (var item in menu) {
+          print('Блюдо: ${item['name']}, изображение: ${item['imagesUrl']}');
+        }
         isLoading = false;
       });
     } catch (e) {
@@ -52,6 +100,38 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _generateTodayMenu() async {
+    final today = DateTime.now();
+    final dateStr =
+        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+
+    // Получаем все доступные блюда
+    final snapshot = await FirebaseFirestore.instance
+        .collection('dishes')
+        .where('isAvailable', isEqualTo: true)
+        .get();
+
+    final allDishes = snapshot.docs
+        .map((doc) => Dish.fromFirestore(doc))
+        .toList();
+
+    if (allDishes.length < 3) {
+      throw Exception('Недостаточно блюд для формирования меню');
+    }
+
+    // Выбираем 3 случайных
+    final shuffled = List<Dish>.from(allDishes)..shuffle();
+    final selectedDishes = shuffled.take(3).toList();
+    final dishIds = selectedDishes.map((d) => d.id).toList();
+
+    // Сохраняем меню
+    await FirebaseFirestore.instance.collection('dailyMenus').doc(dateStr).set({
+      'date': dateStr,
+      'dishesOfDay': dishIds,
+      'generatedAt': FieldValue.serverTimestamp(),
+    });
   }
 
   @override
@@ -230,14 +310,15 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
                               ),
                             ),
                             ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
+                                
                                 Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (BuildContext context) =>
-                                        BronScreen(),
-                                  ),
-                                );
+                                   context,
+                                   MaterialPageRoute(
+                                     builder: (BuildContext context) =>
+                                         BronScreen(),
+                                   ),
+                                 );
                               },
                               style: ElevatedButton.styleFrom(
                                 textStyle: TextStyle(
@@ -284,7 +365,7 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
                   );
                 },
               ),
-              FooterScreen()
+              FooterScreen(),
             ],
           ),
         ),

@@ -55,7 +55,7 @@ class _CatScreenState extends State<CatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    //final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Container(
     

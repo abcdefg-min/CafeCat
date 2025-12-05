@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'sections/Pages_banner.dart';
-import 'sections/Pages_contact.dart';
+import 'sections/Pages_price.dart';
 import 'widgets/SiteFooter.dart';
 import 'sections/Pages_rules.dart';
 import "widgets/SiteHeader.dart";
