@@ -1,10 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_cafe/widgets/SiteFooter.dart';
 import 'package:flutter_cafe/widgets/SiteHeader.dart';
 import 'Pages_1.dart';
 import 'Pages3_cat.dart';
 import 'Pages2_bron.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 
 const double KHeaderHeight = 80.0;
 
@@ -15,29 +17,29 @@ class MenuPagesScreen extends StatefulWidget {
   State<MenuPagesScreen> createState() => _MenuPagesScreenState();
 }
 
-class Dish {
-  final String id;
-  final String name;
-  final String price;
-  final String imagesUrl;
+// class Dish {
+//   final String id;
+//   final String name;
+//   final String price;
+//   final String imagesUrl;
 
-  Dish({
-    required this.id,
-    required this.name,
-    required this.price,
-    required this.imagesUrl,
-  });
+//   Dish({
+//     required this.id,
+//     required this.name,
+//     required this.price,
+//     required this.imagesUrl,
+//   });
 
-  factory Dish.fromFirestore(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    return Dish(
-      id: doc.id,
-      name: data['name'] as String,
-      price: data['price'] as String,
-      imagesUrl: data['imagesUrl'] as String,
-    );
-  }
-}
+//   factory Dish.fromFirestore(DocumentSnapshot doc) {
+//     final data = doc.data() as Map<String, dynamic>;
+//     return Dish(
+//       id: doc.id,
+//       name: data['name'] as String,
+//       price: data['price'] as String,
+//       imagesUrl: data['imagesUrl'] as String,
+//     );
+//   }
+// }
 
 class _MenuPagesScreenState extends State<MenuPagesScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -53,85 +55,26 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
 
   Future<void> _loadMenuFromFirestore() async {
     try {
-      final today = DateTime.now();
-      final dateStr =
-          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final response = await http.get(Uri.parse('http://'));
+      if (response.statusCode == 200) {
+        final menuJson = jsonDecode(response.body) as List;
+        setState(() {
+          menu = menuJson.map((item) => item as Map<String, dynamic>).toList();
+          isLoading = false;
+        });
 
-      // 1. Получаем документ с меню на сегодня
-      final menuDocRef = FirebaseFirestore.instance
-          .collection('dailyMenus')
-          .doc(dateStr);
-      final menuDoc = await menuDocRef.get();
-
-      if (!menuDoc.exists) {
-        // Меню на сегодня не сгенерировано — генерируем
-        await _generateTodayMenu();
-        // Перезагружаем
-        return _loadMenuFromFirestore();
-      }
-
-      // 2. Получаем список ID блюд
-      final dishIds = List<String>.from(menuDoc.data()!['dishesOfDay']);
-
-      // 3. Загружаем сами блюда
-      final futures = dishIds.map(
-        (id) => FirebaseFirestore.instance.collection('dishes').doc(id).get(),
-      );
-      final docs = await Future.wait(futures);
-
-      setState(() {
-        menu = docs.map((doc) {
-          final dish = Dish.fromFirestore(doc);
-          return {
-            'name': dish.name,
-            'price': dish.price,
-            'imagesUrl': dish.imagesUrl,
-          };
-        }).toList();
-        print('Загружено блюд: ${menu.length}');
         for (var item in menu) {
           print('Блюдо: ${item['name']}, изображение: ${item['imagesUrl']}');
         }
-        isLoading = false;
-      });
+      } else {
+        throw Exception('Сервер вернул ошибку: ${response.statusCode}');
+      }
     } catch (e) {
       print('Ошибка загрузки меню: $e');
       setState(() {
         isLoading = false;
       });
     }
-  }
-
-  Future<void> _generateTodayMenu() async {
-    final today = DateTime.now();
-    final dateStr =
-        '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-
-    // Получаем все доступные блюда
-    final snapshot = await FirebaseFirestore.instance
-        .collection('dishes')
-        .where('isAvailable', isEqualTo: true)
-        .get();
-
-    final allDishes = snapshot.docs
-        .map((doc) => Dish.fromFirestore(doc))
-        .toList();
-
-    if (allDishes.length < 3) {
-      throw Exception('Недостаточно блюд для формирования меню');
-    }
-
-    // Выбираем 3 случайных
-    final shuffled = List<Dish>.from(allDishes)..shuffle();
-    final selectedDishes = shuffled.take(3).toList();
-    final dishIds = selectedDishes.map((d) => d.id).toList();
-
-    // Сохраняем меню
-    await FirebaseFirestore.instance.collection('dailyMenus').doc(dateStr).set({
-      'date': dateStr,
-      'dishesOfDay': dishIds,
-      'generatedAt': FieldValue.serverTimestamp(),
-    });
   }
 
   @override

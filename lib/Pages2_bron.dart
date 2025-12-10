@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'widgets/SiteHeader.dart';
 import 'Pages4_menu.dart';
@@ -36,72 +35,78 @@ class _BronScreenState extends State<BronScreen> {
 
   Future<void> _loadTables() async {
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('tables')
-          .get();
+      //изменить URL
+      final response = await http.get(Uri.parse('http://'));
 
-      setState(() {
-        tables = snapshot.docs
-            .map((doc) => {'id': doc.id, ...doc.data()})
-            .toList();
-      });
+      if (response.statusCode == 200) {
+        final tablesJson = jsonEncode(response.body) as List;
+        setState(() {
+          tables = tablesJson.cast<Map<String, dynamic>>();
+        });
+      } else {
+        throw Exception('Не удалось загрузить столы');
+      }
     } catch (e) {
       print('Ошибка загрузки столов: $e');
     }
   }
 
+  //загрузка занятых столов по дате и времени
   Future<void> _loadOccupiedTables(String date, String time) async {
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('bookings')
-          .where('date', isEqualTo: date)
-          .where('time', isEqualTo: time)
-          .where('status', whereIn: ['pending', 'confirmed'])
-          .get();
+      final response = await http.get(Uri.parse('http://'));
 
-      print('Загружаем занятые столы для даты: $date, времени: $time');
-      print('Найдено броней: ${snapshot.size}');
-      snapshot.docs.forEach((doc) {
-        print('Бронь: tableId=${doc['tableId']}, status=${doc['status']}');
-      });
-
-      setState(() {
-        _occupiedTables = snapshot.docs
-            .map((doc) => doc['tableId'] as String)
-            .toList();
-      });
+      if (response.statusCode == 200) {
+        final occupied = jsonDecode(response.body) as List;
+        setState(() {
+          _occupiedTables = occupied.cast<String>();
+        });
+      } else {
+        throw Exception('Не удалось загрузить занятые столы');
+      }
     } catch (e) {
       print('Ошибка загрузки занятых столов: $e');
     }
   }
 
-  void _submitBooking() async {
+  //отправка брони на сервак
+  Future<void> _submitBooking() async {
     if (_selectedTableId == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Выберите столик')));
       return;
     }
+
+    if (!_validatePrimaryFields() || !_validatePrimaryFieldsTwo()) return;
+
+    final bookingData = {
+      'name': _nameController.text.trim(),
+      'phone': _phoneController.text.trim(),
+      'email': _emailController.text.trim(),
+      'date': _dateController.text.trim(),
+      'time': _timeController.text.trim(),
+      'guests': int.tryParse(_guestsController.text.trim()) ?? 1,
+      'tableId': _selectedTableId!,
+    };
+
     try {
-      await FirebaseFirestore.instance.collection('bookings').add({
-        'name': _nameController.text.trim(),
-        'phone': _phoneController.text.trim(),
-        'email': _emailController.text.trim(),
-        'date': _dateController.text.trim(),
-        'time': _timeController.text.trim(),
-        'guests': _guestsController.text.trim(),
-        'tableId': _selectedTableId!,
-        'status': 'pending',
-        'crearedAt': FieldValue.serverTimestamp(),
-        'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(hours: 3))),
-      });
-      Navigator.pop(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Бронь создана')));
-      _nameController.clear();
-      _phoneController.clear();
-      _emailController.clear();
+      final response = await http.post(
+        Uri.parse(
+          'https://ваш-домен.com/api/bookings',
+        ), // ← замените на ваш URL
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(bookingData),
+      );
+      if (response.statusCode == 201) {
+        _resetFields();
+        Navigator.pop(context);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Бронь создана')));
+      } else {
+        throw Exception('Ошибка сервера: ${response.statusCode}');
+      }
     } catch (e) {
       ScaffoldMessenger.of(
         context,
@@ -109,9 +114,18 @@ class _BronScreenState extends State<BronScreen> {
     }
   }
 
+  void _resetFields() {
+    _nameController.clear();
+    _phoneController.clear();
+    _emailController.clear();
+    _dateController.clear();
+    _timeController.clear();
+    _guestsController.clear();
+    _selectedTableId = null;
+  }
+
   bool _validatePrimaryFields() {
     bool isValid = true;
-
     if (_nameController.text.trim().isEmpty) {
       setState(() {
         _nameError = 'Обязательное поле';
@@ -189,12 +203,6 @@ class _BronScreenState extends State<BronScreen> {
 
     return isValid;
   }
-
-  // void _showErrorSnackBar(String message) {
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     SnackBar(content: Text(message)),
-  //   );
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -384,9 +392,7 @@ class _BronScreenState extends State<BronScreen> {
                         setState(() {
                           step = 0;
                         });
-                      },
-                      
-                      ),
+                      }),
               ),
             );
           },

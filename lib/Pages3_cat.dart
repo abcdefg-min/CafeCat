@@ -1,8 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_cafe/Pages_1.dart';
 import 'widgets/SiteHeader.dart';
 import 'Pages4_menu.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 import 'widgets/SiteFooter.dart';
 
 const double KHeaderHeight = 80.0;
@@ -28,25 +30,27 @@ class _CatScreenState extends State<CatScreen> {
 
   Future<void> _loadCatsFromFirestore() async {
     try {
-      final snapshot = await FirebaseFirestore.instance
-          .collection('cats')
-          .get();
+      //заменить URL
+      final response = await http.get(Uri.parse('http://'));
+      if (response.statusCode == 200) {
+        final catsJson = jsonDecode(response.body) as List;
+        setState(() {
+          cats = catsJson.map((item) => item as Map<String, dynamic>).toList();
+          isLoading = false;
+        });
 
-      setState(() {
-        cats = snapshot.docs.map((doc) {
-          final data = doc.data();
-          print('Загружен кот: ${data['name']} - ${data['imageUrl']}');
-          return {
-            'name': data['name'] as String,
-            'description': data['description'] as String,
-            'gender': data['gender'] as String,
-            'imageUrl': data['imageUrl'] as String,
-          };
-        }).toList();
-        isLoading = false;
-      });
+        for (var cat in cats) {
+          print('Загружен кот: ${cat['name']} - ${cat['imageUrl']}');
+        }
+      } else {
+          throw Exception('Сервер вернул статус: ${response.statusCode}');
+        }
+
     } catch (e) {
       print('Ошибка загрузки котов: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Не удалось загрузить котов')),
+      );
       setState(() {
         isLoading = false;
       });
