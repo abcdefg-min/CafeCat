@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'widgets/SiteHeader.dart';
 import 'Pages4_menu.dart';
 import 'widgets/SiteFooter.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class BronScreen extends StatefulWidget {
   const BronScreen({super.key});
@@ -12,6 +15,186 @@ class BronScreen extends StatefulWidget {
 
 class _BronScreenState extends State<BronScreen> {
   late final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _dateController = TextEditingController();
+  final _timeController = TextEditingController();
+  final _guestsController = TextEditingController();
+
+  List<Map<String, dynamic>> tables = [];
+  List<String> _occupiedTables = [];
+  String? _selectedTableId;
+
+  String? _nameError;
+  String? _phoneError;
+  String? _emailError;
+  String? _dateError;
+  String? _timeError;
+  String? _guestsError;
+
+  Future<void> _loadTables() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('tables')
+          .get();
+
+      setState(() {
+        tables = snapshot.docs
+            .map((doc) => {'id': doc.id, ...doc.data()})
+            .toList();
+      });
+    } catch (e) {
+      print('Ошибка загрузки столов: $e');
+    }
+  }
+
+  Future<void> _loadOccupiedTables(String date, String time) async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('bookings')
+          .where('date', isEqualTo: date)
+          .where('time', isEqualTo: time)
+          .where('status', whereIn: ['pending', 'confirmed'])
+          .get();
+
+      print('Загружаем занятые столы для даты: $date, времени: $time');
+      print('Найдено броней: ${snapshot.size}');
+      snapshot.docs.forEach((doc) {
+        print('Бронь: tableId=${doc['tableId']}, status=${doc['status']}');
+      });
+
+      setState(() {
+        _occupiedTables = snapshot.docs
+            .map((doc) => doc['tableId'] as String)
+            .toList();
+      });
+    } catch (e) {
+      print('Ошибка загрузки занятых столов: $e');
+    }
+  }
+
+  void _submitBooking() async {
+    if (_selectedTableId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Выберите столик')));
+      return;
+    }
+    try {
+      await FirebaseFirestore.instance.collection('bookings').add({
+        'name': _nameController.text.trim(),
+        'phone': _phoneController.text.trim(),
+        'email': _emailController.text.trim(),
+        'date': _dateController.text.trim(),
+        'time': _timeController.text.trim(),
+        'guests': _guestsController.text.trim(),
+        'tableId': _selectedTableId!,
+        'status': 'pending',
+        'crearedAt': FieldValue.serverTimestamp(),
+        'expiresAt': Timestamp.fromDate(DateTime.now().add(Duration(hours: 3))),
+      });
+      Navigator.pop(context);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Бронь создана')));
+      _nameController.clear();
+      _phoneController.clear();
+      _emailController.clear();
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+    }
+  }
+
+  bool _validatePrimaryFields() {
+    bool isValid = true;
+
+    if (_nameController.text.trim().isEmpty) {
+      setState(() {
+        _nameError = 'Обязательное поле';
+      });
+      isValid = false;
+    } else {
+      setState(() {
+        _nameError = null;
+      });
+    }
+
+    if (_phoneController.text.trim().isEmpty) {
+      setState(() {
+        _phoneError = 'Обязательное поле';
+      });
+      isValid = false;
+    } else if (!RegExp(
+      r'^[\+]?[0-9\s\-\(\)]{10,}$',
+    ).hasMatch(_phoneController.text.trim())) {
+      setState(() {
+        _phoneError = 'Некорректный номер';
+      });
+      isValid = false;
+    } else {
+      setState(() {
+        _phoneError = null;
+      });
+    }
+
+    if (_emailController.text.trim().isEmpty) {
+      setState(() {
+        _emailError = 'Обязательное поле';
+      });
+      isValid = false;
+    } else if (!RegExp(
+      r'^[^@]+@[^@]+\.[^@]+',
+    ).hasMatch(_emailController.text.trim())) {
+      setState(() {
+        _emailError = 'Некорректная почта';
+      });
+      isValid = false;
+    } else {
+      setState(() {
+        _emailError = null;
+      });
+    }
+
+    return isValid;
+  }
+
+  bool _validatePrimaryFieldsTwo() {
+    bool isValid = true;
+
+    if (_dateController.text.trim().isEmpty) {
+      setState(() {
+        _dateError = 'Обязательное поле';
+      });
+      isValid = false;
+    } else {
+      setState(() {
+        _dateError = null;
+      });
+    }
+
+    if (_timeController.text.trim().isEmpty) {
+      setState(() {
+        _timeError = 'Обязательное поле';
+      });
+      isValid = false;
+    } else {
+      setState(() {
+        _timeError = null;
+      });
+    }
+
+    return isValid;
+  }
+
+  // void _showErrorSnackBar(String message) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(content: Text(message)),
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -57,6 +240,7 @@ class _BronScreenState extends State<BronScreen> {
                           ? 300
                           : 900,
                       child: TextField(
+                        controller: _nameController,
                         decoration: InputDecoration(
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
@@ -71,6 +255,7 @@ class _BronScreenState extends State<BronScreen> {
                             ),
                           ),
                           hintText: "Имя",
+                          errorText: _nameError,
                         ),
                       ),
                     ),
@@ -82,6 +267,7 @@ class _BronScreenState extends State<BronScreen> {
                           ? 300
                           : 900,
                       child: TextField(
+                        controller: _phoneController,
                         decoration: InputDecoration(
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
@@ -96,6 +282,7 @@ class _BronScreenState extends State<BronScreen> {
                             ),
                           ),
                           hintText: "Телефон",
+                          errorText: _phoneError,
                         ),
                       ),
                     ),
@@ -107,6 +294,7 @@ class _BronScreenState extends State<BronScreen> {
                           ? 300
                           : 900,
                       child: TextField(
+                        controller: _emailController,
                         decoration: InputDecoration(
                           enabledBorder: OutlineInputBorder(
                             borderSide: BorderSide(
@@ -121,6 +309,7 @@ class _BronScreenState extends State<BronScreen> {
                             ),
                           ),
                           hintText: "Почта",
+                          errorText: _emailError,
                         ),
                       ),
                     ),
@@ -129,7 +318,11 @@ class _BronScreenState extends State<BronScreen> {
                     Padding(padding: EdgeInsets.all(40)),
                     Container(
                       child: ElevatedButton(
-                        onPressed: _showDialogOneTwo,
+                        onPressed: () {
+                          if (_validatePrimaryFields()) {
+                            _showDialogOneTwo();
+                          }
+                        },
 
                         style: ElevatedButton.styleFrom(
                           textStyle: TextStyle(fontSize: 30),
@@ -167,6 +360,11 @@ class _BronScreenState extends State<BronScreen> {
       context: context,
       builder: (context) {
         int step = 0;
+        String? _selectedTableId;
+
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _loadTables();
+        });
 
         return StatefulBuilder(
           builder: (context, setState) {
@@ -186,7 +384,9 @@ class _BronScreenState extends State<BronScreen> {
                         setState(() {
                           step = 0;
                         });
-                      }),
+                      },
+                      
+                      ),
               ),
             );
           },
@@ -195,7 +395,7 @@ class _BronScreenState extends State<BronScreen> {
     );
   }
 
-  Widget _showDialogOne(VoidCallback setState) {
+  Widget _showDialogOne(VoidCallback onNext) {
     return Column(
       children: [
         Padding(padding: EdgeInsets.only(top: 50)),
@@ -215,6 +415,8 @@ class _BronScreenState extends State<BronScreen> {
               SizedBox(
                 width: 700,
                 child: TextField(
+                  controller: _dateController,
+                  readOnly: true,
                   decoration: InputDecoration(
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(
@@ -229,10 +431,23 @@ class _BronScreenState extends State<BronScreen> {
                       ),
                     ),
                     hintText: "Дата",
+                    errorText: _dateError,
                     hintStyle: TextStyle(
                       color: Color.fromARGB(255, 255, 252, 231),
                     ),
                   ),
+                  onTap: () async {
+                    final DateTime? picked = await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime.now(),
+                      lastDate: DateTime.now().add(Duration(days: 365)),
+                    );
+                    if (picked != null) {
+                      _dateController.text =
+                          "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                    }
+                  },
                 ),
               ),
 
@@ -241,6 +456,8 @@ class _BronScreenState extends State<BronScreen> {
               SizedBox(
                 width: 700,
                 child: TextField(
+                  controller: _timeController,
+                  readOnly: true,
                   decoration: InputDecoration(
                     enabledBorder: OutlineInputBorder(
                       borderSide: BorderSide(
@@ -255,10 +472,21 @@ class _BronScreenState extends State<BronScreen> {
                       ),
                     ),
                     hintText: "Время",
+                    errorText: _timeError,
                     hintStyle: TextStyle(
                       color: Color.fromARGB(255, 255, 252, 231),
                     ),
                   ),
+                  onTap: () async {
+                    final TimeOfDay? picked = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (picked != null) {
+                      _timeController.text =
+                          "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+                    }
+                  },
                 ),
               ),
 
@@ -295,8 +523,15 @@ class _BronScreenState extends State<BronScreen> {
               ),
               Container(
                 child: ElevatedButton(
-                  onPressed: () {
-                    setState();
+                  onPressed: () async {
+                    if (_validatePrimaryFieldsTwo()) {
+                      final selectedDate = _dateController.text.trim();
+                      final selectedTime = _timeController.text.trim();
+
+                      await _loadOccupiedTables(selectedDate, selectedTime);
+
+                      onNext();
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     textStyle: TextStyle(
@@ -322,7 +557,7 @@ class _BronScreenState extends State<BronScreen> {
   }
 
   //2 диалоговое окно для выбора доступного столика
-  Widget _showDialogTwo(VoidCallback setState) {
+  Widget _showDialogTwo(VoidCallback onBack) {
     return Center(
       child: Column(
         children: [
@@ -337,14 +572,18 @@ class _BronScreenState extends State<BronScreen> {
           SizedBox(
             width: MediaQuery.of(context).size.width < 600 ? 500 : 600,
             height: MediaQuery.of(context).size.width < 600 ? 250 : 480,
-            child: Container(
-              decoration: BoxDecoration(
-                //border: Border.all(color: Colors.red, width: 2),
-                image: DecorationImage(
-                  image: AssetImage('images/cafe_layout.png'),
-                  fit: BoxFit.cover,
+            child: Stack(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                      image: AssetImage('images/cafe_layout.png'),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
-              ),
+                ..._buildTableButtons(context),
+              ],
             ),
           ),
           Padding(
@@ -354,14 +593,7 @@ class _BronScreenState extends State<BronScreen> {
           ),
           Container(
             child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (BuildContext context) => BronScreen(),
-                  ),
-                );
-              },
+              onPressed: _submitBooking,
               style: ElevatedButton.styleFrom(
                 textStyle: TextStyle(
                   fontSize: MediaQuery.of(context).size.width < 600 ? 20 : 30,
@@ -379,6 +611,65 @@ class _BronScreenState extends State<BronScreen> {
         ],
       ),
     );
+  }
+
+  List<Widget> _buildTableButtons(BuildContext content) {
+    final size = MediaQuery.of(content).size;
+    final containerWidth = size.width < 600 ? 500 : 500;
+    final containerHeight = size.width < 600 ? 250 : 480;
+
+    return tables.map((table) {
+      final tableId = table['id'];
+      print('Стол: tableId = $tableId (тип: ${tableId.runtimeType})');
+
+      if (tableId == null) {
+        print('Пропущен стол без id: $table');
+        return Container();
+      }
+      final idStr = tableId.toString();
+
+      final xPercent = (table['x_percent'] as num?)?.toDouble() ?? 0.0;
+      final yPercent = (table['y_percent'] as num?)?.toDouble() ?? 0.0;
+      double x = xPercent * containerWidth;
+      double y = yPercent * containerHeight;
+
+      Color color = Colors.purple[700]!;
+
+      if (_occupiedTables.contains(table['id'])) {
+        color = Colors.red[700]!; // занят
+      } else if (_selectedTableId == table['id']) {
+        color = Colors.green[700]!; // выбран
+      }
+      return Positioned(
+        left: x - 15,
+        top: y - 13,
+        child: GestureDetector(
+          onTap: () {
+            if (!_occupiedTables.contains(idStr)) {
+              print('Выбран стол: $idStr');
+              setState(() {
+                _selectedTableId = idStr;
+              });
+            }
+          },
+          child: Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color,
+              border: Border.all(color: Colors.white, width: 2),
+            ),
+            child: Center(
+              child: Text(
+                idStr.length > 1 ? idStr.substring(6) : idStr,
+                style: TextStyle(color: Colors.white, fontSize: 12),
+              ),
+            ),
+          ),
+        ),
+      );
+    }).toList();
   }
 
   Widget _dialogMenu(BuildContext context) {
