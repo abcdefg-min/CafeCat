@@ -31,7 +31,9 @@ class _CatScreenState extends State<CatScreen> {
   Future<void> _loadCatsFromFirestore() async {
     try {
       //заменить URL
-      final response = await http.get(Uri.parse('http://'));
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/api/cats'),
+      );
       if (response.statusCode == 200) {
         final catsJson = jsonDecode(response.body) as List;
         setState(() {
@@ -40,17 +42,16 @@ class _CatScreenState extends State<CatScreen> {
         });
 
         for (var cat in cats) {
-          print('Загружен кот: ${cat['name']} - ${cat['imageUrl']}');
+          print('Загружен кот: ${cat['name']} - ${cat['image_url']}');
         }
       } else {
-          throw Exception('Сервер вернул статус: ${response.statusCode}');
-        }
-
+        throw Exception('Сервер вернул статус: ${response.statusCode}');
+      }
     } catch (e) {
       print('Ошибка загрузки котов: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Не удалось загрузить котов')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Не удалось загрузить котов')));
       setState(() {
         isLoading = false;
       });
@@ -62,7 +63,6 @@ class _CatScreenState extends State<CatScreen> {
     //final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Container(
-    
       child: Scaffold(
         key: _scaffoldKey,
         drawer: _dialogMenu(context),
@@ -90,137 +90,123 @@ class _CatScreenState extends State<CatScreen> {
                     ),
 
                     // Основной контент с min-height
-                    SizedBox(
-                      height: minContentHeight > 0 ? minContentHeight : null,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: constraints.maxWidth < 600
-                                  ? 24.0
-                                  : 120.0,
-                              vertical: constraints.maxWidth < 600
-                                  ? 24.0
-                                  : 120.0,
-                            ),
-                            child: isLoading
-                                ? Center(child: CircularProgressIndicator())
-                                : Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        'Наши котики',
-                                        style: TextStyle(
-                                          fontSize: constraints.maxWidth < 600
-                                              ? 20
-                                              : 45,
-                                          color: Color(0xFF3A2B28),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 40),
-                                      // Сетка котиков
-                                      LayoutBuilder(
-                                        builder: (context, constraints2) {
-                                          final screenWidth =
-                                              constraints2.maxWidth;
-                                          final crossAxisCount =
-                                              screenWidth < 600 ? 2 : 6;
-                                          final itemSpacing = screenWidth < 600
-                                              ? 20.0
-                                              : 30.0;
-                                          final itemSize =
-                                              (screenWidth -
-                                                  (crossAxisCount - 1) *
-                                                      itemSpacing) /
-                                              crossAxisCount;
-
-                                          return GridView.builder(
-                                            itemCount: cats.length,
-                                            shrinkWrap: true,
-                                            physics:
-                                                const NeverScrollableScrollPhysics(),
-                                            gridDelegate:
-                                                SliverGridDelegateWithFixedCrossAxisCount(
-                                                  crossAxisCount:
-                                                      crossAxisCount,
-                                                  crossAxisSpacing: itemSpacing,
-                                                  mainAxisSpacing:
-                                                      itemSpacing * 1.2,
-                                                  mainAxisExtent: itemSize + 60,
-                                                ),
-                                            itemBuilder: (context, index) {
-                                              final cat = cats[index];
-                                              return GestureDetector(
-                                                onTap: () => _showCatDetails(
-                                                  context,
-                                                  cat,
-                                                ),
-                                                child: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Container(
-                                                      width: itemSize,
-                                                      height: itemSize,
-                                                      decoration: BoxDecoration(
-                                                        color: Colors.white
-                                                            .withOpacity(0.85),
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              14,
-                                                            ),
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                            color: Colors.black
-                                                                .withOpacity(
-                                                                  0.2,
-                                                                ),
-                                                            blurRadius: 15,
-                                                            spreadRadius: 2,
-                                                          ),
-                                                        ],
-                                                      ),
-                                                      child: ClipRRect(
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              14,
-                                                            ),
-                                                        child: Image.asset(
-                                                          cat['imageUrl'],
-                                                          fit: BoxFit.cover,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 8),
-                                                    Text(
-                                                      cat['name'],
-                                                      style: const TextStyle(
-                                                        fontSize: 16,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: Color(
-                                                          0xFF3A2B28,
-                                                        ),
-                                                      ),
-                                                      textAlign:
-                                                          TextAlign.center,
-                                                    ),
-                                                  ],
-                                                ),
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: constraints.maxWidth < 600
+                                ? 24.0
+                                : 120.0,
+                            vertical: constraints.maxWidth < 600 ? 24.0 : 120.0,
                           ),
-                        ],
-                      ),
+                          child: isLoading
+                              ? Center(child: CircularProgressIndicator())
+                              : Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Наши котики',
+                                      style: TextStyle(
+                                        fontSize: constraints.maxWidth < 600
+                                            ? 20
+                                            : 45,
+                                        color: Color(0xFF3A2B28),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 40),
+                                    // Сетка котиков
+                                    LayoutBuilder(
+                                      builder: (context, constraints2) {
+                                        final screenWidth =
+                                            constraints2.maxWidth;
+                                        final crossAxisCount = screenWidth < 600
+                                            ? 1
+                                            : 4;
+                                        final itemSpacing = screenWidth < 600
+                                            ? 20.0
+                                            : 30.0;
+                                        final itemSize =
+                                            (screenWidth -
+                                                (crossAxisCount - 1) *
+                                                    itemSpacing) /
+                                            crossAxisCount;
+
+                                        return GridView.builder(
+                                          itemCount: cats.length,
+                                          shrinkWrap: true,
+                                          physics:
+                                              const NeverScrollableScrollPhysics(),
+                                          gridDelegate:
+                                              SliverGridDelegateWithFixedCrossAxisCount(
+                                                crossAxisCount: crossAxisCount,
+                                                crossAxisSpacing: itemSpacing,
+                                                mainAxisSpacing:
+                                                    itemSpacing * 1.2,
+                                                mainAxisExtent: itemSize + 60,
+                                              ),
+                                          itemBuilder: (context, index) {
+                                            final cat = cats[index];
+                                            return GestureDetector(
+                                              onTap: () =>
+                                                  _showCatDetails(context, cat),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Container(
+                                                    width: itemSize,
+                                                    height: itemSize,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.white
+                                                          .withOpacity(0.85),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            14,
+                                                          ),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.black
+                                                              .withOpacity(0.2),
+                                                          blurRadius: 15,
+                                                          spreadRadius: 2,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: ClipRRect(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            14,
+                                                          ),
+                                                      child: Image.asset(
+                                                        cat['image_url'],
+                                                        fit: BoxFit.cover,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  Text(
+                                                    cat['name'],
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      color: Color(0xFF3A2B28),
+                                                    ),
+                                                    textAlign: TextAlign.center,
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ],
+                                ),
+                        ),
+                      ],
                     ),
 
                     // ✅ Футер — всегда после контента
@@ -244,7 +230,7 @@ class _CatScreenState extends State<CatScreen> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 150),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -252,9 +238,9 @@ class _CatScreenState extends State<CatScreen> {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.asset(
-                    cat['imageUrl'],
-                    width: 120,
-                    height: 120,
+                    cat['image_url'],
+                    width: 200,
+                    height: 200,
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -263,7 +249,7 @@ class _CatScreenState extends State<CatScreen> {
                 Text(
                   cat['name'],
                   style: const TextStyle(
-                    fontSize: 22,
+                    fontSize: 35,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF3A2B28),
                   ),
@@ -272,14 +258,14 @@ class _CatScreenState extends State<CatScreen> {
                 // Пол
                 Text(
                   'Пол: ${cat['gender']}',
-                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                  style: const TextStyle(fontSize: 20, color: Colors.grey),
                 ),
                 const SizedBox(height: 8),
                 // Описание
                 Text(
                   cat['description'],
                   textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 15, height: 1.5),
+                  style: const TextStyle(fontSize: 18, height: 1.5),
                 ),
                 const SizedBox(height: 20),
                 // Кнопка "Закрыть"
@@ -293,7 +279,7 @@ class _CatScreenState extends State<CatScreen> {
                   ),
                   child: const Text(
                     'Закрыть',
-                    style: TextStyle(color: Colors.white),
+                    style: TextStyle(color: Colors.white, fontSize: 20),
                   ),
                 ),
               ],

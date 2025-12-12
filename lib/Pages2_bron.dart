@@ -24,7 +24,6 @@ class _BronScreenState extends State<BronScreen> {
 
   List<Map<String, dynamic>> tables = [];
   List<String> _occupiedTables = [];
-  String? _selectedTableId;
 
   String? _nameError;
   String? _phoneError;
@@ -35,13 +34,16 @@ class _BronScreenState extends State<BronScreen> {
 
   Future<void> _loadTables() async {
     try {
-      //изменить URL
-      final response = await http.get(Uri.parse('http://'));
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/api/tables'),
+      );
 
       if (response.statusCode == 200) {
-        final tablesJson = jsonEncode(response.body) as List;
+        final tablesJson = jsonDecode(response.body) as List;
         setState(() {
-          tables = tablesJson.cast<Map<String, dynamic>>();
+          tables = tablesJson
+              .map((item) => item as Map<String, dynamic>)
+              .toList();
         });
       } else {
         throw Exception('Не удалось загрузить столы');
@@ -51,15 +53,20 @@ class _BronScreenState extends State<BronScreen> {
     }
   }
 
-  //загрузка занятых столов по дате и времени
   Future<void> _loadOccupiedTables(String date, String time) async {
     try {
-      final response = await http.get(Uri.parse('http://'));
+      final response = await http.get(
+        Uri.parse(
+          'http://localhost:3000/api/occupied-tables?date=$date&time=$time',
+        ),
+      );
 
       if (response.statusCode == 200) {
         final occupied = jsonDecode(response.body) as List;
         setState(() {
-          _occupiedTables = occupied.cast<String>();
+          _occupiedTables = (occupied as List)
+              .map((item) => item.toString())
+              .toList();
         });
       } else {
         throw Exception('Не удалось загрузить занятые столы');
@@ -69,43 +76,50 @@ class _BronScreenState extends State<BronScreen> {
     }
   }
 
-  //отправка брони на сервак
-  Future<void> _submitBooking() async {
-    if (_selectedTableId == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Выберите столик')));
-      return;
-    }
-
-    if (!_validatePrimaryFields() || !_validatePrimaryFieldsTwo()) return;
-
+  Future<void> _submitBooking({
+    required BuildContext dialogContext,
+    required String selectedTableId,
+    required int guests,
+    required String name,
+    required String phone,
+    required String email,
+    required String date,
+    required String time,
+  }) async {
     final bookingData = {
-      'name': _nameController.text.trim(),
-      'phone': _phoneController.text.trim(),
-      'email': _emailController.text.trim(),
-      'date': _dateController.text.trim(),
-      'time': _timeController.text.trim(),
-      'guests': int.tryParse(_guestsController.text.trim()) ?? 1,
-      'tableId': _selectedTableId!,
+      'name': name,
+      'phone': phone,
+      'email': email,
+      'date': date,
+      'time': time,
+      'guests': guests,
+      'tableId': selectedTableId,
     };
 
     try {
       final response = await http.post(
-        Uri.parse(
-          'https://ваш-домен.com/api/bookings',
-        ), // ← замените на ваш URL
+        Uri.parse('http://localhost:3000/api/bookings'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(bookingData),
       );
       if (response.statusCode == 201) {
+        // Обновляем внешнее состояние
+        setState(() {
+          if (!_occupiedTables.contains(selectedTableId)) {
+            _occupiedTables.add(selectedTableId);
+          }
+        });
+
         _resetFields();
-        Navigator.pop(context);
+        Navigator.of(dialogContext).pop(); // закрываем диалог
+        Navigator.of(context).pop(); // возвращаемся назад (опционально)
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Бронь создана')));
       } else {
-        throw Exception('Ошибка сервера: ${response.statusCode}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка сервера: ${response.statusCode}')),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(
@@ -121,7 +135,6 @@ class _BronScreenState extends State<BronScreen> {
     _dateController.clear();
     _timeController.clear();
     _guestsController.clear();
-    _selectedTableId = null;
   }
 
   bool _validatePrimaryFields() {
@@ -178,7 +191,6 @@ class _BronScreenState extends State<BronScreen> {
 
   bool _validatePrimaryFieldsTwo() {
     bool isValid = true;
-
     if (_dateController.text.trim().isEmpty) {
       setState(() {
         _dateError = 'Обязательное поле';
@@ -205,6 +217,12 @@ class _BronScreenState extends State<BronScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _loadTables(); // Загружаем столы при открытии экрана
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -222,7 +240,6 @@ class _BronScreenState extends State<BronScreen> {
                   _scaffoldKey.currentState?.openDrawer();
                 },
               ),
-
               Padding(
                 padding: EdgeInsets.symmetric(
                   horizontal: isMobile ? 24.0 : 120.0,
@@ -234,19 +251,13 @@ class _BronScreenState extends State<BronScreen> {
                     Text(
                       'Форма бронирования',
                       style: TextStyle(
-                        fontSize: MediaQuery.of(context).size.width < 600
-                            ? 30
-                            : 50,
+                        fontSize: isMobile ? 30 : 50,
                         color: Color(0xFF3A2B28),
                       ),
                     ),
-
-                    //поле для ввода имени
                     Padding(padding: EdgeInsets.all(20)),
                     SizedBox(
-                      width: MediaQuery.of(context).size.width < 900
-                          ? 300
-                          : 900,
+                      width: isMobile ? 300 : 900,
                       child: TextField(
                         controller: _nameController,
                         decoration: InputDecoration(
@@ -267,13 +278,9 @@ class _BronScreenState extends State<BronScreen> {
                         ),
                       ),
                     ),
-
-                    //поле для ввода телефона
                     Padding(padding: EdgeInsets.all(20)),
                     SizedBox(
-                      width: MediaQuery.of(context).size.width < 900
-                          ? 300
-                          : 900,
+                      width: isMobile ? 300 : 900,
                       child: TextField(
                         controller: _phoneController,
                         decoration: InputDecoration(
@@ -294,13 +301,9 @@ class _BronScreenState extends State<BronScreen> {
                         ),
                       ),
                     ),
-
-                    //поле для ввода почты
                     Padding(padding: EdgeInsets.all(20)),
                     SizedBox(
-                      width: MediaQuery.of(context).size.width < 900
-                          ? 300
-                          : 900,
+                      width: isMobile ? 300 : 900,
                       child: TextField(
                         controller: _emailController,
                         decoration: InputDecoration(
@@ -321,33 +324,27 @@ class _BronScreenState extends State<BronScreen> {
                         ),
                       ),
                     ),
-
-                    //КНОПКА "ДАЛЕЕ"
                     Padding(padding: EdgeInsets.all(40)),
-                    Container(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          if (_validatePrimaryFields()) {
-                            _showDialogOneTwo();
-                          }
-                        },
-
-                        style: ElevatedButton.styleFrom(
-                          textStyle: TextStyle(fontSize: 30),
-                          backgroundColor: Color.fromARGB(255, 255, 252, 231),
-                          elevation: 5,
-                          padding: EdgeInsets.only(
-                            top: 20,
-                            bottom: 20,
-                            left: 40,
-                            right: 40,
-                          ),
+                    ElevatedButton(
+                      onPressed: () {
+                        if (_validatePrimaryFields()) {
+                          _showDialogOneTwo();
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        textStyle: TextStyle(fontSize: 30),
+                        backgroundColor: Color.fromARGB(255, 255, 252, 231),
+                        elevation: 5,
+                        padding: EdgeInsets.only(
+                          top: 20,
+                          bottom: 20,
+                          left: 40,
+                          right: 40,
                         ),
-                        //текст
-                        child: Text(
-                          'ДАЛЕЕ',
-                          style: TextStyle(color: Color(0xFF3A2B28)),
-                        ),
+                      ),
+                      child: Text(
+                        'ДАЛЕЕ',
+                        style: TextStyle(color: Color(0xFF3A2B28)),
                       ),
                     ),
                     SizedBox(height: 100),
@@ -362,14 +359,15 @@ class _BronScreenState extends State<BronScreen> {
     );
   }
 
-  //всплывающие окна (2 штуки)
   void _showDialogOneTwo() {
+    String? selectedTableId;
+    List<String> occupiedTables = List.from(_occupiedTables);
+    //List<Map<String, dynamic>> localTables = List.from(tables);
+    int step = 0;
+
     showDialog(
       context: context,
-      builder: (context) {
-        int step = 0;
-        String? _selectedTableId;
-
+      builder: (dialogContext) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _loadTables();
         });
@@ -383,16 +381,37 @@ class _BronScreenState extends State<BronScreen> {
                 width: MediaQuery.of(context).size.width < 900 ? 600 : 900,
                 padding: EdgeInsets.all(20),
                 child: step == 0
-                    ? _showDialogOne(() {
-                        setState(() {
-                          step = 1;
-                        });
+                    ? _buildStepOne(context, setState, () {
+                        final date = _dateController.text.trim();
+                        final time = _timeController.text.trim();
+                        if (date.isNotEmpty && time.isNotEmpty) {
+                          _loadOccupiedTables(date, time).then((_) {
+                            // Обновляем копию после загрузки
+                            setState(() {
+                              occupiedTables = List.from(_occupiedTables);
+                              step = 1;
+                            });
+                          });
+                        }
                       })
-                    : _showDialogTwo(() {
-                        setState(() {
-                          step = 0;
-                        });
-                      }),
+                    : _buildStepTwo(
+                        dialogContext,
+                        tables,
+                        occupiedTables,
+                        selectedTableId,
+                        (id) => setState(() => selectedTableId = id),
+                        () => _submitBooking(
+                          dialogContext: dialogContext,
+                          selectedTableId: selectedTableId!,
+                          guests:
+                              int.tryParse(_guestsController.text.trim()) ?? 1,
+                          name: _nameController.text.trim(),
+                          phone: _phoneController.text.trim(),
+                          email: _emailController.text.trim(),
+                          date: _dateController.text.trim(),
+                          time: _timeController.text.trim(),
+                        ),
+                      ),
               ),
             );
           },
@@ -401,10 +420,14 @@ class _BronScreenState extends State<BronScreen> {
     );
   }
 
-  Widget _showDialogOne(VoidCallback onNext) {
+  Widget _buildStepOne(
+    BuildContext context,
+    StateSetter setState,
+    VoidCallback onNext,
+  ) {
     return Column(
       children: [
-        Padding(padding: EdgeInsets.only(top: 50)),
+        SizedBox(height: 50),
         Text(
           'Форма брони',
           style: TextStyle(
@@ -412,270 +435,215 @@ class _BronScreenState extends State<BronScreen> {
             color: Color.fromARGB(255, 255, 252, 231),
           ),
         ),
+        SizedBox(height: 20),
         SizedBox(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              //поле для ввода даты
-              Padding(padding: EdgeInsets.all(20)),
-              SizedBox(
-                width: 700,
-                child: TextField(
-                  controller: _dateController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 255, 252, 231),
-                        width: 3.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color(0xFF3A2B28),
-                        width: 3.0,
-                      ),
-                    ),
-                    hintText: "Дата",
-                    errorText: _dateError,
-                    hintStyle: TextStyle(
-                      color: Color.fromARGB(255, 255, 252, 231),
-                    ),
-                  ),
-                  onTap: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(Duration(days: 365)),
-                    );
-                    if (picked != null) {
-                      _dateController.text =
-                          "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-                    }
-                  },
+          width: 700,
+          child: TextField(
+            controller: _dateController,
+            readOnly: true,
+            decoration: InputDecoration(
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: Color.fromARGB(255, 255, 252, 231),
+                  width: 3.0,
                 ),
               ),
-
-              //поле для ввода времени
-              Padding(padding: EdgeInsets.all(20)),
-              SizedBox(
-                width: 700,
-                child: TextField(
-                  controller: _timeController,
-                  readOnly: true,
-                  decoration: InputDecoration(
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 255, 252, 231),
-                        width: 3.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color(0xFF3A2B28),
-                        width: 3.0,
-                      ),
-                    ),
-                    hintText: "Время",
-                    errorText: _timeError,
-                    hintStyle: TextStyle(
-                      color: Color.fromARGB(255, 255, 252, 231),
-                    ),
-                  ),
-                  onTap: () async {
-                    final TimeOfDay? picked = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.now(),
-                    );
-                    if (picked != null) {
-                      _timeController.text =
-                          "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
-                    }
-                  },
-                ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF3A2B28), width: 3.0),
               ),
-
-              //поле для ввода кл-ва гостей
-              Padding(padding: EdgeInsets.all(20)),
-              SizedBox(
-                width: 700,
-                child: TextField(
-                  decoration: InputDecoration(
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color.fromARGB(255, 255, 252, 231),
-                        width: 3.0,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: BorderSide(
-                        color: Color(0xFF3A2B28),
-                        width: 3.0,
-                      ),
-                    ),
-                    hintText: "Количество гостей",
-                    hintStyle: TextStyle(
-                      color: Color.fromARGB(255, 255, 252, 231),
-                    ),
-                  ),
-                ),
-              ),
-
-              Padding(
-                padding: EdgeInsets.all(
-                  MediaQuery.of(context).size.width < 600 ? 30 : 60,
-                ),
-              ),
-              Container(
-                child: ElevatedButton(
-                  onPressed: () async {
-                    if (_validatePrimaryFieldsTwo()) {
-                      final selectedDate = _dateController.text.trim();
-                      final selectedTime = _timeController.text.trim();
-
-                      await _loadOccupiedTables(selectedDate, selectedTime);
-
-                      onNext();
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    textStyle: TextStyle(
-                      fontSize: MediaQuery.of(context).size.width < 600
-                          ? 20
-                          : 30,
-                    ),
-                    backgroundColor: Color.fromARGB(255, 255, 252, 231),
-                    elevation: 5,
-                    padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                  ),
-                  child: Text(
-                    'ДАЛЕЕ',
-                    style: TextStyle(color: Color(0xFF3A2B28)),
-                  ),
-                ),
-              ),
-            ],
+              hintText: "Дата",
+              errorText: _dateError,
+              hintStyle: TextStyle(color: Color.fromARGB(255, 255, 252, 231)),
+            ),
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: DateTime.now(),
+                firstDate: DateTime.now(),
+                lastDate: DateTime.now().add(Duration(days: 365)),
+              );
+              if (picked != null) {
+                _dateController.text =
+                    "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                setState(() {
+                  _dateError = null;
+                });
+              }
+            },
           ),
+        ),
+        SizedBox(height: 20),
+        SizedBox(
+          width: 700,
+          child: TextField(
+            controller: _timeController,
+            readOnly: true,
+            decoration: InputDecoration(
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: Color.fromARGB(255, 255, 252, 231),
+                  width: 3.0,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF3A2B28), width: 3.0),
+              ),
+              hintText: "Время",
+              errorText: _timeError,
+              hintStyle: TextStyle(color: Color.fromARGB(255, 255, 252, 231)),
+            ),
+            onTap: () async {
+              final picked = await showTimePicker(
+                context: context,
+                initialTime: TimeOfDay.now(),
+              );
+              if (picked != null) {
+                _timeController.text =
+                    "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+                setState(() {
+                  _timeError = null;
+                });
+              }
+            },
+          ),
+        ),
+        SizedBox(height: 20),
+        SizedBox(
+          width: 700,
+          child: TextField(
+            controller: _guestsController,
+            decoration: InputDecoration(
+              enabledBorder: OutlineInputBorder(
+                borderSide: BorderSide(
+                  color: Color.fromARGB(255, 255, 252, 231),
+                  width: 3.0,
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF3A2B28), width: 3.0),
+              ),
+              hintText: "Количество гостей",
+              hintStyle: TextStyle(color: Color.fromARGB(255, 255, 252, 231)),
+            ),
+          ),
+        ),
+        SizedBox(height: MediaQuery.of(context).size.width < 600 ? 30 : 60),
+        ElevatedButton(
+          onPressed: () {
+            if (_validatePrimaryFieldsTwo()) {
+              onNext();
+            }
+          },
+          style: ElevatedButton.styleFrom(
+            textStyle: TextStyle(
+              fontSize: MediaQuery.of(context).size.width < 600 ? 20 : 30,
+            ),
+            backgroundColor: Color.fromARGB(255, 255, 252, 231),
+            padding: EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+          ),
+          child: Text('ДАЛЕЕ', style: TextStyle(color: Color(0xFF3A2B28))),
         ),
       ],
     );
   }
 
-  //2 диалоговое окно для выбора доступного столика
-  Widget _showDialogTwo(VoidCallback onBack) {
-    return Center(
-      child: Column(
-        children: [
-          Text(
-            'Выбор доступного столика',
-            style: TextStyle(
-              fontSize: MediaQuery.of(context).size.width < 600 ? 20 : 40,
-              color: Color.fromARGB(255, 255, 252, 231),
-            ),
-          ),
-          Padding(padding: EdgeInsets.only(top: 20)),
-          SizedBox(
-            width: MediaQuery.of(context).size.width < 600 ? 500 : 600,
-            height: MediaQuery.of(context).size.width < 600 ? 250 : 480,
-            child: Stack(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('images/cafe_layout.png'),
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                ..._buildTableButtons(context),
-              ],
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.all(
-              MediaQuery.of(context).size.width < 600 ? 60 : 10,
-            ),
-          ),
-          Container(
-            child: ElevatedButton(
-              onPressed: _submitBooking,
-              style: ElevatedButton.styleFrom(
-                textStyle: TextStyle(
-                  fontSize: MediaQuery.of(context).size.width < 600 ? 20 : 30,
-                ),
-                backgroundColor: Color.fromARGB(255, 255, 252, 231),
-                elevation: 5,
-                padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-              ),
-              child: Text(
-                'Забронировать',
-                style: TextStyle(color: Color(0xFF3A2B28), fontSize: 23),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildTableButtons(BuildContext content) {
-    final size = MediaQuery.of(content).size;
-    final containerWidth = size.width < 600 ? 500 : 500;
+  Widget _buildStepTwo(
+    BuildContext dialogContext,
+    List<Map<String, dynamic>> tables,
+    List<String> occupiedTables,
+    String? selectedTableId,
+    void Function(String?) onTableSelected,
+    VoidCallback onBook,
+  ) {
+    final size = MediaQuery.of(dialogContext).size;
+    final containerWidth = size.width < 600 ? 500 : 600;
     final containerHeight = size.width < 600 ? 250 : 480;
 
-    return tables.map((table) {
-      final tableId = table['id'];
-      print('Стол: tableId = $tableId (тип: ${tableId.runtimeType})');
-
-      if (tableId == null) {
-        print('Пропущен стол без id: $table');
-        return Container();
-      }
-      final idStr = tableId.toString();
-
-      final xPercent = (table['x_percent'] as num?)?.toDouble() ?? 0.0;
-      final yPercent = (table['y_percent'] as num?)?.toDouble() ?? 0.0;
-      double x = xPercent * containerWidth;
-      double y = yPercent * containerHeight;
-
-      Color color = Colors.purple[700]!;
-
-      if (_occupiedTables.contains(table['id'])) {
-        color = Colors.red[700]!; // занят
-      } else if (_selectedTableId == table['id']) {
-        color = Colors.green[700]!; // выбран
-      }
-      return Positioned(
-        left: x - 15,
-        top: y - 13,
-        child: GestureDetector(
-          onTap: () {
-            if (!_occupiedTables.contains(idStr)) {
-              print('Выбран стол: $idStr');
-              setState(() {
-                _selectedTableId = idStr;
-              });
-            }
-          },
-          child: Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color,
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: Center(
-              child: Text(
-                idStr.length > 1 ? idStr.substring(6) : idStr,
-                style: TextStyle(color: Colors.white, fontSize: 12),
-              ),
-            ),
+    return Column(
+      children: [
+        Text(
+          'Выбор доступного столика',
+          style: TextStyle(
+            fontSize: size.width < 600 ? 20 : 40,
+            color: Color.fromARGB(255, 255, 252, 231),
           ),
         ),
-      );
-    }).toList();
+        SizedBox(height: 20),
+        SizedBox(
+          width: containerWidth.toDouble(),
+          height: containerHeight.toDouble(),
+          child: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage('images/cafe_layout.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+              ...tables.map((table) {
+                final tableId = table['id'];
+                if (tableId == null) return Container();
+                final idStr = tableId.toString();
+                final xPercent =
+                    double.tryParse(table['x_percent'].toString()) ?? 0.0;
+                final yPercent =
+                    double.tryParse(table['y_percent'].toString()) ?? 0.0;
+                double x = xPercent * containerWidth;
+                double y = yPercent * containerHeight;
+
+                Color color = Colors.purple[700]!;
+                if (occupiedTables.contains(idStr)) {
+                  color = Colors.red[700]!;
+                } else if (selectedTableId == idStr) {
+                  color = Colors.green[700]!;
+                }
+
+                return Positioned(
+                  left: x - 15,
+                  top: y - 13,
+                  child: GestureDetector(
+                    onTap: () {
+                      if (!occupiedTables.contains(idStr)) {
+                        onTableSelected(idStr);
+                      }
+                    },
+                    child: Container(
+                      width: 50,
+                      height: 50,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: color,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Center(
+                        child: Text(
+                          idStr.length > 1 ? idStr.substring(6) : idStr,
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
+        ),
+        SizedBox(height: 20),
+        ElevatedButton(
+          onPressed: selectedTableId == null ? null : onBook,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color.fromARGB(255, 255, 252, 231),
+            padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+          ),
+          child: Text(
+            'Забронировать',
+            style: TextStyle(color: Color(0xFF3A2B28), fontSize: 23),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _dialogMenu(BuildContext context) {
@@ -691,14 +659,8 @@ class _BronScreenState extends State<BronScreen> {
               height: 100,
             ),
           ),
-          ListTile(
-            title: Text('Главная'),
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
+          ListTile(title: Text('Главная'), onTap: () => Navigator.pop(context)),
           ListTile(title: Text('О нас'), onTap: () => Navigator.pop(context)),
-
           ListTile(title: Text('Котики'), onTap: () => Navigator.pop(context)),
           ListTile(
             title: Text('Меню'),

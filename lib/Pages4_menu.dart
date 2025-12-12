@@ -55,7 +55,7 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
 
   Future<void> _loadMenuFromFirestore() async {
     try {
-      final response = await http.get(Uri.parse('http://'));
+      final response = await http.get(Uri.parse('http://localhost:3000/api/daily_menus'));
       if (response.statusCode == 200) {
         final menuJson = jsonDecode(response.body) as List;
         setState(() {
@@ -64,7 +64,7 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
         });
 
         for (var item in menu) {
-          print('Блюдо: ${item['name']}, изображение: ${item['imagesUrl']}');
+          print('Блюдо: ${item['name']}, изображение: ${item['images_url']}');
         }
       } else {
         throw Exception('Сервер вернул ошибку: ${response.statusCode}');
@@ -191,7 +191,7 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
                                                 top: Radius.circular(16),
                                               ),
                                           child: Image.asset(
-                                            item['imagesUrl'],
+                                            item['images_url'],
                                             height: 280,
                                             width: double.infinity,
                                             fit: BoxFit.cover,
