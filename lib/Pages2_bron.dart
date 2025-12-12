@@ -361,7 +361,6 @@ class _BronScreenState extends State<BronScreen> {
 
   void _showDialogOneTwo() {
     String? selectedTableId;
-    List<String> occupiedTables = List.from(_occupiedTables);
     //List<Map<String, dynamic>> localTables = List.from(tables);
     int step = 0;
 
@@ -374,6 +373,8 @@ class _BronScreenState extends State<BronScreen> {
 
         return StatefulBuilder(
           builder: (context, setState) {
+            List<String> occupiedTables = List.from(_occupiedTables);
+
             return Dialog(
               backgroundColor: Color.fromARGB(214, 58, 43, 40),
               child: Container(
@@ -385,6 +386,11 @@ class _BronScreenState extends State<BronScreen> {
                         final date = _dateController.text.trim();
                         final time = _timeController.text.trim();
                         if (date.isNotEmpty && time.isNotEmpty) {
+                          setState(() {
+                            _occupiedTables.clear();
+                            occupiedTables = [];
+                          });
+
                           _loadOccupiedTables(date, time).then((_) {
                             // Обновляем копию после загрузки
                             setState(() {
@@ -601,7 +607,7 @@ class _BronScreenState extends State<BronScreen> {
                 }
 
                 return Positioned(
-                  left: x - 15,
+                  left: x - 72,
                   top: y - 13,
                   child: GestureDetector(
                     onTap: () {

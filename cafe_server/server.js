@@ -27,21 +27,43 @@ pool.query('SELECT NOW()', (err, res) => {
 
 // POST api/bookings
 app.post('/api/bookings', async (req, res) => {
+    console.log('⚠️ Пришёл запрос:', req.body);
+
     const { name, phone, email, date, time, guests, tableId } = req.body;
 
-    const expires_at = new Date();
-    expires_at.setHours(expires_at.getHours() + 3);
+    // 🔴 Проверяем, что все поля есть
+    if (!date || !time || !name || !phone || !tableId) {
+        return res.status(400).json({ error: 'Не хватает данных' });
+    }
 
     try {
+        // Добавляем секунды, если их нет
+        const timeWithSeconds = time.length === 5 ? `${time}:00` : time;
+
+        const bookingDateTime = new Date(`${date}T${timeWithSeconds}+03:00`);
+
+        if (isNaN(bookingDateTime.getTime())) {
+            return res.status(400).json({ error: 'Некорректная дата или время' });
+        }
+
+        const expires_at = new Date(bookingDateTime);
+        expires_at.setHours(expires_at.getHours() + 2);
+
+        if (bookingDateTime < new Date()) {
+            return res.status(400).json({ error: 'Нельзя бронировать на прошлое' });
+        }
+
         const result = await pool.query(
             `INSERT INTO bookings (name, phone, email, date, time, guests, "tableId", "expires_at")
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
             [name, phone, email, date, time, guests, tableId, expires_at]
         );
+
         res.status(201).json({ id: result.rows[0].id });
+
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Ошбика бронирования' });
+        console.error('❌ Ошибка бронирования:', err);
+        res.status(500).json({ error: 'Ошибка бронирования', details: err.message });
     }
 });
 
@@ -66,9 +88,11 @@ app.get('/api/tables', async (req, res) => {
 // GET /api/occupied-tables?date=2025-12-10&time=18:00
 app.get('/api/occupied-tables', async (req, res) => {
     const { date, time } = req.query;
+    // Убедитесь, что date — в формате YYYY-MM-DD
     const result = await pool.query(
-        `SELECT "tableId"::TEXT FROM bookings 
-     WHERE date = $1 AND time = $2 AND "expiresAt" > NOW()`,
+        `SELECT "tableId"::TEXT 
+         FROM bookings 
+         WHERE date = $1 AND time = $2 AND "expires_at" > NOW()`,
         [date, time]
     );
     res.json(result.rows.map(r => r.tableId));
