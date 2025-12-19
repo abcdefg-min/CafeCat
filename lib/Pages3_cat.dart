@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_cafe/Pages_1.dart';
 import 'widgets/SiteHeader.dart';
@@ -124,7 +123,7 @@ class _CatScreenState extends State<CatScreen> {
                                             constraints2.maxWidth;
                                         final crossAxisCount = screenWidth < 600
                                             ? 1
-                                            : 4;
+                                            : 5;
                                         final itemSpacing = screenWidth < 600
                                             ? 20.0
                                             : 30.0;
@@ -177,7 +176,7 @@ class _CatScreenState extends State<CatScreen> {
                                                     child: ClipRRect(
                                                       borderRadius:
                                                           BorderRadius.circular(
-                                                            14,
+                                                            14, 
                                                           ),
                                                       child: Image.asset(
                                                         cat['image_url'],

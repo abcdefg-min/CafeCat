@@ -28,13 +28,39 @@ pool.query('SELECT NOW()', (err, res) => {
 // POST api/bookings
 app.post('/api/bookings', async (req, res) => {
     console.log('⚠️ Пришёл запрос:', req.body);
+    console.log('📦 Тело запроса:', JSON.stringify(req.body, null, 2));
+    console.log('📊 Поля:', {
+        date: req.body.date,
+        time: req.body.time,
+        name: req.body.name,
+        phone: req.body.phone,
+        email: req.body.email,
+        guests: req.body.guests,
+        tableId: req.body.tableId
+    });
 
     const { name, phone, email, date, time, guests, tableId } = req.body;
 
-    // 🔴 Проверяем, что все поля есть
-    if (!date || !time || !name || !phone || !tableId) {
-        return res.status(400).json({ error: 'Не хватает данных' });
+    // Проверяем все обязательные поля
+    const missingFields = [];
+    if (!date) missingFields.push('date');
+    if (!time) missingFields.push('time');
+    if (!name) missingFields.push('name');
+    if (!phone) missingFields.push('phone');
+    if (!tableId) missingFields.push('tableId');
+    
+    if (missingFields.length > 0) {
+        console.error('❌ Отсутствуют поля:', missingFields);
+        return res.status(400).json({ 
+            error: 'Не хватает данных',
+            missingFields: missingFields 
+        });
     }
+
+    // 🔴 Проверяем, что все поля есть
+    // if (!date || !time || !name || !phone || !tableId) {
+    //     return res.status(400).json({ error: 'Не хватает данных' });
+    // }
 
     try {
         // Добавляем секунды, если их нет
@@ -87,15 +113,40 @@ app.get('/api/tables', async (req, res) => {
 
 // GET /api/occupied-tables?date=2025-12-10&time=18:00
 app.get('/api/occupied-tables', async (req, res) => {
-    const { date, time } = req.query;
-    // Убедитесь, что date — в формате YYYY-MM-DD
-    const result = await pool.query(
-        `SELECT "tableId"::TEXT 
-         FROM bookings 
-         WHERE date = $1 AND time = $2 AND "expires_at" > NOW()`,
-        [date, time]
-    );
-    res.json(result.rows.map(r => r.tableId));
+    try {
+        const { date, time } = req.query;
+        
+        if (!date || !time) {
+            return res.status(400).json({ error: 'Необходимы параметры date и time' });
+        }
+        
+        // Проверка даты
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date)) {
+            return res.status(400).json({ error: 'Неверный формат даты. Используйте YYYY-MM-DD' });
+        }
+        
+        // Проверка времени (HH:MM или HH:MM:SS)
+        const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
+        if (!timeRegex.test(time)) {
+            return res.status(400).json({ error: 'Неверный формат времени' });
+        }
+        
+        const result = await pool.query(
+            `SELECT "tableId"::TEXT 
+             FROM bookings 
+             WHERE date = $1::DATE 
+               AND time = $2::TIME 
+               AND "expires_at" > NOW()
+               AND status NOT IN ('cancelled', 'expired')`, // Добавьте проверку статуса
+            [date, time]
+        );
+        
+        res.json(result.rows.map(r => r.tableId));
+    } catch (error) {
+        console.error('Ошибка при получении занятых столов:', error);
+        res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    }
 });
 
 // GET /api/cats
@@ -158,6 +209,69 @@ app.get('/api/daily_menus', async (req, res) => {
         res.status(500).json({ error: 'Ошибка загрузки меню' });
     }
 })
+
+app.post('/api/admin/login', async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        const result = await pool.query(
+            'SELECT * FROM admin WHERE email = $1 AND is_active = true',
+            [email]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(401).json({ error: 'Пользователь не найден' });
+        }
+
+        const user = result.rows[0];
+
+        if (user.role !== 'admin') {
+            return res.status(403).json({ error: 'Доступ запрещён' });
+        }
+
+        // Можно вернуть токен, но для простоты — просто данные
+        res.json({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Ошибка входа' });
+    }
+})
+
+//редактирвоание броней
+app.put('/api/bookings/:id', async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['pending', 'confirmed', 'cancelled', 'expired'].includes(status)) {
+        return res.status(400).json({ error: 'Некорректный статус' });
+    }
+
+    try {
+        const result = await pool.query(
+            `UPDATE bookings 
+             SET status = $1
+             WHERE id = $2 RETURNING *`,
+            [status, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Бронь не найдена' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Ошибка обновления брони' });
+    }
+});
+
+
 
 // Автоочистка каждые 10 минут
 cron.schedule('*/10 * * * *', async () => {

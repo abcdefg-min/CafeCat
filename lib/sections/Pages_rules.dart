@@ -12,16 +12,16 @@ class RulesScreen extends StatelessWidget {
         top: isMobile ? 40 : 110,
         left: isMobile ? 20 : 200,
         right: isMobile ? 20 : 200,
-        bottom: isMobile ? 50 : 250
+        bottom: isMobile ? 50 : 140,
       ),
 
       //margin: EdgeInsets.only(bottom: isMobile ? 20 : 10),
       decoration: BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage('assets/images/фон3.jpg'),
-          fit: BoxFit.cover,
-        ),
-        color: Colors.white.withOpacity(0.95),
+        // image: DecorationImage(
+        //   image: AssetImage('assets/images/фон3.jpg'),
+        //   fit: BoxFit.cover
+        // ),
+        color: Color.fromARGB(255, 229, 217, 201),
 
         //borderRadius: BorderRadius.circular(16),
       ),
@@ -40,72 +40,75 @@ class RulesScreen extends StatelessWidget {
             'Мы создали уютное место, где вы можете насладиться вкусной едой, ароматным кофе и общением с нашими котиками. Каждый гость найдёт здесь что-то себе по душе, уют и удовольствие.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: isMobile ? 16 : 18,
+              fontSize: isMobile ? 16 : 20,
               color: Color(0xFF3A2B28),
             ),
+            
           ),
-
-          SizedBox(height: isMobile ? 20 : 60),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF3A2B28),
-              padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 30, vertical: isMobile ? 20 : 25),
-            ),
-            child: Text(
-              'Не буди спящих котиков — они тоже любят поспать',
-              style: TextStyle(
-                fontSize: isMobile ? 13 : 21,
-                color: Color.fromARGB(255, 255, 252, 231),
-                ),
-            ),
-          ),
-          SizedBox(height: isMobile ? 10 : 30),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF3A2B28),
-              padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 30, vertical: isMobile ? 20 : 25),
-            ),
-            child: Text(
-              'Не корми со стола - у них свой рацион',
-              style: TextStyle(
-                fontSize: isMobile ? 13 : 21,
-                color: Color.fromARGB(255, 255, 252, 231),
-                ),
-            ),
-          ),
-          SizedBox(height: isMobile ? 10 : 30),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF3A2B28),
-              padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 30, vertical: isMobile ? 20 : 25),
-            ),
-            child: Text(
-              'Гладим аккуратно - если кошка ушла, ненастаиваем',
-              style: TextStyle(
-                fontSize: isMobile ? 13 : 21,
-                color: Color.fromARGB(255, 255, 252, 231),
-                ),
-            ),
-          ),
-          SizedBox(height: isMobile ? 10 : 30),
-          ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Color(0xFF3A2B28),
-              padding: EdgeInsets.symmetric(horizontal: isMobile ? 20 : 30, vertical: isMobile ? 20 : 25),
-            ),
-            child: Text(
-              'Дети - под присмотром - чтобы игра была безопасной для всех',
-              style: TextStyle(
-                fontSize: isMobile ? 13 : 21,
-                color: Color.fromARGB(255, 255, 252, 231),
-                ),
+          Padding(padding: EdgeInsets.all(isMobile ? 30 : 50)),
+          SizedBox(
+            height: isMobile ? 100 : 200,
+            width: 1200,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  _buildPriceCard(
+                    'Не буди спящих котиков — они тоже любят поспать',
+                    isMobile,
+                  ),
+                  SizedBox(width: 20),
+                  _buildPriceCard(
+                    'Не корми со стола - у них свой рацион',
+                    isMobile,
+                  ),
+                  SizedBox(width: 20),
+                  _buildPriceCard(
+                    'Гладим аккуратно - если кошка ушла, ненастаиваем',
+                    isMobile,
+                  ),
+                  SizedBox(width: 20),
+                  _buildPriceCard(
+                    'Дети - под присмотром - чтобы игра была безопасной для всех',
+                    isMobile,
+                  ),
+                ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPriceCard(String title, bool isMobile) {
+    return Container(
+      width: isMobile ? 200 : 700,
+      height: isMobile ? 200 : 120,
+      decoration: BoxDecoration(
+        color: Color(0xFF3A2B28),
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.5),
+            blurRadius: 4,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: isMobile ? 13 : 25,
+              color: Color.fromARGB(255, 229, 217, 201),
+            ),
+          ),
+        ],
+        
       ),
     );
   }

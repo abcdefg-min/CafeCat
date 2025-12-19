@@ -30,7 +30,7 @@ class _BronScreenState extends State<BronScreen> {
   String? _emailError;
   String? _dateError;
   String? _timeError;
-  String? _guestsError;
+  //String? _guestsError;
 
   Future<void> _loadTables() async {
     try {
@@ -55,11 +55,20 @@ class _BronScreenState extends State<BronScreen> {
 
   Future<void> _loadOccupiedTables(String date, String time) async {
     try {
+      print('Загрузка занятых столов для: $date $time');
+
+      // Кодируем параметры для URL
+      final encodedDate = Uri.encodeComponent(date);
+      final encodedTime = Uri.encodeComponent(time);
+
       final response = await http.get(
         Uri.parse(
           'http://localhost:3000/api/occupied-tables?date=$date&time=$time',
         ),
       );
+
+      print('Статус ответа: ${response.statusCode}');
+      print('Тело ответа: ${response.body}');
 
       if (response.statusCode == 200) {
         final occupied = jsonDecode(response.body) as List;
@@ -190,29 +199,56 @@ class _BronScreenState extends State<BronScreen> {
   }
 
   bool _validatePrimaryFieldsTwo() {
+    print('Валидация полей:');
+    print('Дата: "${_dateController.text}"');
+    print('Время: "${_timeController.text}"');
+
     bool isValid = true;
     if (_dateController.text.trim().isEmpty) {
+      print('Дата пустая');
       setState(() {
         _dateError = 'Обязательное поле';
       });
       isValid = false;
     } else {
-      setState(() {
-        _dateError = null;
-      });
+      // Проверка формата даты
+      final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+      if (!dateRegex.hasMatch(_dateController.text.trim())) {
+        print('Неверный формат даты');
+        setState(() {
+          _dateError = 'Неверный формат. Используйте ГГГГ-ММ-ДД';
+        });
+        isValid = false;
+      } else {
+        setState(() {
+          _dateError = null;
+        });
+      }
     }
 
     if (_timeController.text.trim().isEmpty) {
+      print('Время пустое');
       setState(() {
         _timeError = 'Обязательное поле';
       });
       isValid = false;
     } else {
-      setState(() {
-        _timeError = null;
-      });
+      // Проверка формата времени
+      final timeRegex = RegExp(r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$');
+      if (!timeRegex.hasMatch(_timeController.text.trim())) {
+        print('Неверный формат времени');
+        setState(() {
+          _timeError = 'Неверный формат. Используйте ЧЧ:ММ';
+        });
+        isValid = false;
+      } else {
+        setState(() {
+          _timeError = null;
+        });
+      }
     }
 
+    print('Результат валидации: $isValid');
     return isValid;
   }
 
@@ -378,26 +414,75 @@ class _BronScreenState extends State<BronScreen> {
             return Dialog(
               backgroundColor: Color.fromARGB(214, 58, 43, 40),
               child: Container(
-                height: MediaQuery.of(context).size.width < 900 ? 550 : 700,
-                width: MediaQuery.of(context).size.width < 900 ? 600 : 900,
+                height: MediaQuery.of(context).size.width < 900 ? 700 : 700,
+                width: MediaQuery.of(context).size.width < 900 ? 900 : 900,
                 padding: EdgeInsets.all(20),
                 child: step == 0
-                    ? _buildStepOne(context, setState, () {
+                    ? _buildStepOne(context, setState, () async {
+                        // Проверяем валидность полей
+                        if (!_validatePrimaryFieldsTwo()) {
+                          return;
+                        }
+
                         final date = _dateController.text.trim();
                         final time = _timeController.text.trim();
-                        if (date.isNotEmpty && time.isNotEmpty) {
-                          setState(() {
-                            _occupiedTables.clear();
-                            occupiedTables = [];
-                          });
 
-                          _loadOccupiedTables(date, time).then((_) {
-                            // Обновляем копию после загрузки
-                            setState(() {
-                              occupiedTables = List.from(_occupiedTables);
-                              step = 1;
-                            });
+                        // Дополнительная проверка формата
+                        final dateRegex = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+                        final timeRegex = RegExp(
+                          r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$',
+                        );
+
+                        if (!dateRegex.hasMatch(date)) {
+                          setState(() {
+                            _dateError =
+                                'Неверный формат даты. Используйте ГГГГ-ММ-ДД';
                           });
+                          return;
+                        }
+
+                        if (!timeRegex.hasMatch(time)) {
+                          setState(() {
+                            _timeError =
+                                'Неверный формат времени. Используйте ЧЧ:ММ';
+                          });
+                          return;
+                        }
+
+                        // Показываем индикатор загрузки
+                        setState(() {
+                          occupiedTables = [];
+                        });
+
+                        // if (date.isNotEmpty && time.isNotEmpty) {
+                        //   setState(() {
+                        //     _occupiedTables.clear();
+                        //     occupiedTables = [];
+                        //   });
+
+                        //   _loadOccupiedTables(date, time).then((_) {
+                        //     // Обновляем копию после загрузки
+                        //     setState(() {
+                        //       occupiedTables = List.from(_occupiedTables);
+                        //       step = 1;
+                        //     });
+                        //   });
+                        // }
+
+                        try {
+                          await _loadOccupiedTables(date, time);
+                          // Обновляем копию после загрузки
+                          setState(() {
+                            occupiedTables = List.from(_occupiedTables);
+                            step = 1;
+                          });
+                        } catch (e) {
+                          ScaffoldMessenger.of(dialogContext).showSnackBar(
+                            SnackBar(
+                              content: Text('Ошибка загрузки данных: $e'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
                         }
                       })
                     : _buildStepTwo(
@@ -562,8 +647,8 @@ class _BronScreenState extends State<BronScreen> {
     VoidCallback onBook,
   ) {
     final size = MediaQuery.of(dialogContext).size;
-    final containerWidth = size.width < 600 ? 500 : 600;
-    final containerHeight = size.width < 600 ? 250 : 480;
+    final containerWidth = size.width < 600 ? 600 : 600;
+    final containerHeight = size.width < 600 ? 480 : 480;
 
     return Column(
       children: [

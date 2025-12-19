@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_cafe/Admin_screen.dart';
+import 'package:flutter_cafe/Pages_admin.dart';
 import '../Pages3_cat.dart';
 import '../Pages_1.dart';
 import '../Pages4_menu.dart';
 import '../Pages5_contact.dart';
+import '../Pages_admin.dart';
 
 class HeaderSite extends StatelessWidget {
   final bool isMobile;
@@ -35,34 +38,74 @@ class HeaderSite extends StatelessWidget {
                 children: [
                   _navButton('Главная', () {
                     Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => PagesScreen())
+                      context,
+                      MaterialPageRoute(builder: (context) => PagesScreen()),
                     );
                   }, isMobile),
                   _navButton('Котики', () {
                     Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => CatScreen())
+                      context,
+                      MaterialPageRoute(builder: (context) => CatScreen()),
                     );
                   }, isMobile),
-                  _navButton('Меню', () {
+                  _navButton('Блюда дня', () {
                     Navigator.push(
-                      context, 
-                      MaterialPageRoute(builder: (context) => MenuPagesScreen())
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MenuPagesScreen(),
+                      ),
                     );
                   }, isMobile),
                   _navButton('Контакты', () {
-                    Navigator.push(context, 
-                    MaterialPageRoute(builder: (context) => ScreenContact())
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => ScreenContact()),
                     );
                   }, isMobile),
                 ],
               ),
             ),
-            if (isMobile) IconButton(
-              onPressed: onMenuTap, 
-              icon: Icon(Icons.menu, color: Color.fromARGB(255, 255, 252, 231)),
-            )
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AdminScreen()),
+              );
+            },
+            icon: Icon(
+              Icons.person_outline,
+              color: Color.fromARGB(255, 255, 252, 231),
+              size: isMobile ? 24 : 30,
+            ),
+          ),
+          if (isMobile)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: onMenuTap,
+                  icon: Icon(
+                    Icons.menu,
+                    color: Color.fromARGB(255, 255, 252, 231),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AdminScreen(),
+                      ),
+                    );
+                  },
+                  icon: Icon(
+                    Icons.percent_outlined,
+                    color: Color.fromARGB(255, 255, 252, 231),
+                    size: isMobile ? 24 : 30,
+                  ),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -83,5 +126,4 @@ class HeaderSite extends StatelessWidget {
       ),
     );
   }
-
 }

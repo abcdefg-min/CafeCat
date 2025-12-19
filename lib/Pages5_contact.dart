@@ -38,7 +38,7 @@ class _ScreenContactState extends State<ScreenContact> {
             children: [
               HeaderSite(
                 isMobile: isMobile,
-                onMenuTap: () {
+                onMenuTap: () { 
                   _scaffoldKey.currentState?.openDrawer();
                 },
               ),
@@ -61,47 +61,88 @@ class _ScreenContactState extends State<ScreenContact> {
                       ),
                     ),
                     SizedBox(height: isMobile ? 20 : 60),
-                    Image.asset(
-                      'images/contact.png',
-                      height: isMobile ? 150 : 400,
-                      fit: BoxFit.cover,
+                    Container(
+                      width: isMobile ? double.infinity : 800,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'images/contact.png',
+                            height: isMobile ? 150 : 550,
+                            fit: BoxFit.cover,
+                          ),
+                          SizedBox(height: 40),
+
+                          // Новая компоновка: адрес слева, телефон и почта — справа
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.location_on,
+                                      color: Color(0xFF3A2B28),
+                                    ),
+                                    SizedBox(width: 10),
+                                    Flexible(
+                                      child: Text(
+                                        'г. Чебоксары\nул. Пирогова, д. 3',
+                                        style: TextStyle(
+                                          fontSize: isMobile ? 14 : 21,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Icon(
+                                          Icons.phone,
+                                          color: Color(0xFF3A2B28),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          '+7 (900) 000-00-00',
+                                          style: TextStyle(
+                                            fontSize: isMobile ? 14 : 21,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    SizedBox(height: 10),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.end,
+                                      children: [
+                                        Icon(
+                                          Icons.email,
+                                          color: Color(0xFF3A2B28),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text(
+                                          'info@catcafe2311.ru',
+                                          style: TextStyle(
+                                            fontSize: isMobile ? 14 : 21,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: 40),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.location_on, color: Color(0xFF3A2B28)),
-                        SizedBox(width: 10),
-                        Text(
-                          'г. Чебоксары\nул. Пирогова, д. 3',
-                          style: TextStyle(fontSize: isMobile ? 14 : 21),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.phone, color: Color(0xFF3A2B28)),
-                        SizedBox(width: 10),
-                        Text(
-                          '+7 (900) 000-00-00',
-                          style: TextStyle(fontSize: isMobile ? 14 : 21),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 18),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.email, color: Color(0xFF3A2B28)),
-                        SizedBox(width: 10),
-                        Text(
-                          'info@catcafe2311.ru',
-                          style: TextStyle(fontSize: isMobile ? 14 : 21),
-                        ),
-                      ],
-                    ),
+
                     SizedBox(height: 80),
                   ],
                 ),
