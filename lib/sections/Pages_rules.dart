@@ -81,7 +81,7 @@ class RulesScreen extends StatelessWidget {
       ),
     );
   }
-
+  
   Widget _buildPriceCard(String title, bool isMobile) {
     return Container(
       width: isMobile ? 200 : 700,

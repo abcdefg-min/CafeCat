@@ -8,12 +8,14 @@ import 'widgets/SiteFooter.dart';
 
 const double KHeaderHeight = 80.0;
 
-class CatScreen extends StatefulWidget {
+class CatScreen extends StatefulWidget {  
   const CatScreen({super.key});
 
   @override
   State<CatScreen> createState() => _CatScreenState();
 }
+
+
 
 class _CatScreenState extends State<CatScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();

@@ -271,8 +271,6 @@ app.put('/api/bookings/:id', async (req, res) => {
     }
 });
 
-
-
 // Автоочистка каждые 10 минут
 cron.schedule('*/10 * * * *', async () => {
     try {

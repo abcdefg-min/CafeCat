@@ -16,10 +16,9 @@ class ContactScreen extends StatelessWidget {
       ),
       //margin: EdgeInsets.only(bottom: isMobile ? 20 : 40),
       decoration: BoxDecoration(
-        
         image: DecorationImage(
           image: AssetImage("assets/images/фон2.jpg"),
-          fit: BoxFit.contain
+          fit: BoxFit.contain,
         ),
         color: Color.fromARGB(255, 229, 217, 201),
       ),
@@ -46,23 +45,27 @@ class ContactScreen extends StatelessWidget {
             ),
 
             SizedBox(height: 70),
-            Text('Стоимость на человека',
-            style: TextStyle(
-              fontSize: isMobile ? 16 : 23,
-              color: Color(0xFF3A2B28),
-            ),
+            Text(
+              'Стоимость на человека',
+              style: TextStyle(
+                fontSize: isMobile ? 16 : 23,
+                color: Color(0xFF3A2B28),
+              ),
             ),
             SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildPriceCard('1 час', '400 руб', isMobile),
-                _buildPriceCard('2 часа', '600 руб', isMobile),
-                _buildPriceCard('Дети до 7 лет', 'бесплатно', isMobile),
-              ],
-              
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildPriceCard('1 час', '400 руб', isMobile),
+                  SizedBox(width: 50),
+                  _buildPriceCard('2 часа', '600 руб', isMobile),
+                  SizedBox(width: 50),
+                  _buildPriceCard('Дети до 7 лет', 'бесплатно', isMobile),
+                ],
+              ),
             ),
-            
           ],
         ),
       ),
@@ -71,13 +74,13 @@ class ContactScreen extends StatelessWidget {
 
   Widget _buildPriceCard(String title, String price, bool isMobile) {
     return Container(
-      width: isMobile ? 150 : 300,
-      height: isMobile ? 200 : 190,
+      width: isMobile ? 300 : 300,
+      height: isMobile ? 190 : 190,
       //padding: EdgeInsets.only(top: 40, left: 20, right: 20, bottom: 40),
       decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage("assets/images/fonprice.png"),
-          fit:  BoxFit.contain
+          fit: BoxFit.contain,
         ),
         //color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -85,29 +88,31 @@ class ContactScreen extends StatelessWidget {
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
             blurRadius: 3,
-            spreadRadius: 1
-          )
-        ]
-        
+            spreadRadius: 1,
+          ),
+        ],
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: isMobile ? 16 : 20,
-              color: Color(0xFF3A2B28)
+          Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(top: 40, left: 30),
+              child: Text(
+                title,
+                style: TextStyle(fontSize: 20, color: Color(0xFF3A2B28)),
+              ),
             ),
           ),
-          Padding(padding: EdgeInsets.only(top: 40, right: 70, left: 10)),
-          Text(
-            price,
-            style: TextStyle(
-              fontSize: isMobile ? 18 : 25,
-              color: Color(0xFF3A2B28)
+
+          Padding(
+            padding: EdgeInsets.only(top: 130, right: 40),
+            child: Text(
+              price,
+              style: TextStyle(fontSize: 30, color: Color(0xFF3A2B28)),
             ),
-          )
+          ),
         ],
       ),
     );
