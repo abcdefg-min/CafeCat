@@ -5,6 +5,8 @@ import 'widgets/SiteHeader.dart';
 import 'Pages4_menu.dart';
 import 'package:http/http.dart' as http;
 import 'widgets/SiteFooter.dart';
+import 'cat_hover.dart';
+import 'cat_details.dart';
 
 const double KHeaderHeight = 80.0;
 
@@ -150,56 +152,61 @@ class _CatScreenState extends State<CatScreen> {
                                               ),
                                           itemBuilder: (context, index) {
                                             final cat = cats[index];
-                                            return GestureDetector(
-                                              onTap: () =>
-                                                  _showCatDetails(context, cat),
-                                              child: Column(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Container(
-                                                    width: itemSize,
-                                                    height: itemSize,
-                                                    decoration: BoxDecoration(
-                                                      color: Colors.white
-                                                          .withOpacity(0.85),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            14,
-                                                          ),
-                                                      boxShadow: [
-                                                        BoxShadow(
-                                                          color: Colors.black
-                                                              .withOpacity(0.2),
-                                                          blurRadius: 15,
-                                                          spreadRadius: 2,
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    child: ClipRRect(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            14, 
-                                                          ),
-                                                      child: Image.asset(
-                                                        cat['image_url'],
-                                                        fit: BoxFit.cover,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  Text(
-                                                    cat['name'],
-                                                    style: const TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      color: Color(0xFF3A2B28),
-                                                    ),
-                                                    textAlign: TextAlign.center,
-                                                  ),
-                                                ],
-                                              ),
+                                            return CatCardHover(
+                                              cat: cat,
+                                              itemSize: itemSize,
+                                              onTap: () => _showCatDetails(context, cat),
                                             );
+                                            // return GestureDetector(
+                                            //   onTap: () =>
+                                            //       _showCatDetails(context, cat),
+                                            //   child: Column(
+                                            //     mainAxisSize: MainAxisSize.min,
+                                            //     children: [
+                                            //       Container(
+                                            //         width: itemSize,
+                                            //         height: itemSize,
+                                            //         decoration: BoxDecoration(
+                                            //           color: Colors.white
+                                            //               .withOpacity(0.85),
+                                            //           borderRadius:
+                                            //               BorderRadius.circular(
+                                            //                 14,
+                                            //               ),
+                                            //           boxShadow: [
+                                            //             BoxShadow(
+                                            //               color: Colors.black
+                                            //                   .withOpacity(0.2),
+                                            //               blurRadius: 15,
+                                            //               spreadRadius: 2,
+                                            //             ),
+                                            //           ],
+                                            //         ),
+                                            //         child: ClipRRect(
+                                            //           borderRadius:
+                                            //               BorderRadius.circular(
+                                            //                 14, 
+                                            //               ),
+                                            //           child: Image.asset(
+                                            //             cat['image_url'],
+                                            //             fit: BoxFit.cover,
+                                            //           ),
+                                            //         ),
+                                            //       ),
+                                            //       const SizedBox(height: 8),
+                                            //       Text(
+                                            //         cat['name'],
+                                            //         style: const TextStyle(
+                                            //           fontSize: 16,
+                                            //           fontWeight:
+                                            //               FontWeight.bold,
+                                            //           color: Color(0xFF3A2B28),
+                                            //         ),
+                                            //         textAlign: TextAlign.center,
+                                            //       ),
+                                            //     ],
+                                            //   ),
+                                            // );
                                           },
                                         );
                                       },
@@ -209,8 +216,6 @@ class _CatScreenState extends State<CatScreen> {
                         ),
                       ],
                     ),
-
-                    // ✅ Футер — всегда после контента
                     FooterScreen(),
                   ],
                 ),
@@ -222,71 +227,73 @@ class _CatScreenState extends State<CatScreen> {
     );
   }
 
+
   void _showCatDetails(BuildContext context, Map<String, dynamic> cat) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 150),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Картинка кота
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.asset(
-                    cat['image_url'],
-                    width: 200,
-                    height: 200,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Имя
-                Text(
-                  cat['name'],
-                  style: const TextStyle(
-                    fontSize: 35,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF3A2B28),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                // Пол
-                Text(
-                  'Пол: ${cat['gender']}',
-                  style: const TextStyle(fontSize: 20, color: Colors.grey),
-                ),
-                const SizedBox(height: 8),
-                // Описание
-                Text(
-                  cat['description'],
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontSize: 18, height: 1.5),
-                ),
-                const SizedBox(height: 20),
-                // Кнопка "Закрыть"
-                ElevatedButton(
-                  onPressed: () => Navigator.pop(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF3A2B28),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Закрыть',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        return CatDetailDialog(cat: cat);
+        // return Dialog(
+        //   shape: RoundedRectangleBorder(
+        //     borderRadius: BorderRadius.circular(20),
+        //   ),
+        //   child: Padding(
+        //     padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 150),
+        //     child: Column(
+        //       mainAxisSize: MainAxisSize.min,
+        //       children: [
+        //         // Картинка кота
+        //         ClipRRect(
+        //           borderRadius: BorderRadius.circular(12),
+        //           child: Image.asset(
+        //             cat['image_url'],
+        //             width: 200,
+        //             height: 200,
+        //             fit: BoxFit.cover,
+        //           ),
+        //         ),
+        //         const SizedBox(height: 16),
+        //         // Имя
+        //         Text(
+        //           cat['name'],
+        //           style: const TextStyle(
+        //             fontSize: 35,
+        //             fontWeight: FontWeight.bold,
+        //             color: Color(0xFF3A2B28),
+        //           ),
+        //         ),
+        //         const SizedBox(height: 8),
+        //         // Пол
+        //         Text(
+        //           'Пол: ${cat['gender']}',
+        //           style: const TextStyle(fontSize: 20, color: Colors.grey),
+        //         ),
+        //         const SizedBox(height: 8),
+        //         // Описание
+        //         Text(
+        //           cat['description'],
+        //           textAlign: TextAlign.center,
+        //           style: const TextStyle(fontSize: 18, height: 1.5),
+        //         ),
+        //         const SizedBox(height: 20),
+        //         // Кнопка "Закрыть"
+        //         ElevatedButton(
+        //           onPressed: () => Navigator.pop(context),
+        //           style: ElevatedButton.styleFrom(
+        //             backgroundColor: Color(0xFF3A2B28),
+        //             shape: RoundedRectangleBorder(
+        //               borderRadius: BorderRadius.circular(12),
+        //             ),
+        //           ),
+        //           child: const Text(
+        //             'Закрыть',
+        //             style: TextStyle(color: Colors.white, fontSize: 20),
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // );
       },
     );
   }

@@ -152,7 +152,7 @@ app.get('/api/occupied-tables', async (req, res) => {
 // GET /api/cats
 app.get('/api/cats', async (req, res) => {
     try {
-        const result = await pool.query('SELECT id, name, description, gender, "image_url" FROM cats');
+        const result = await pool.query('SELECT id, name, description, gender, "image_url", "hover_url" FROM cats');
         res.json(result.rows);
     } catch (err) {
         console.error(err);
