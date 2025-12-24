@@ -22,13 +22,6 @@ class _ScreenContactState extends State<ScreenContact> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Container(
-      // decoration: BoxDecoration(
-      //   image: DecorationImage(
-      //     image: AssetImage('assets/images/фон2.jpg'),
-      //     fit: BoxFit.cover,
-      //   ),
-      //   color: Colors.white.withOpacity(0.95),
-      // ),
       child: Scaffold(
         key: _scaffoldKey,
         drawer: _dialogMenu(context),

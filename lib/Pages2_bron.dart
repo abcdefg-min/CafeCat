@@ -454,21 +454,6 @@ class _BronScreenState extends State<BronScreen> {
                           occupiedTables = [];
                         });
 
-                        // if (date.isNotEmpty && time.isNotEmpty) {
-                        //   setState(() {
-                        //     _occupiedTables.clear();
-                        //     occupiedTables = [];
-                        //   });
-
-                        //   _loadOccupiedTables(date, time).then((_) {
-                        //     // Обновляем копию после загрузки
-                        //     setState(() {
-                        //       occupiedTables = List.from(_occupiedTables);
-                        //       step = 1;
-                        //     });
-                        //   });
-                        // }
-
                         try {
                           await _loadOccupiedTables(date, time);
                           // Обновляем копию после загрузки

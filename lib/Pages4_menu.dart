@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_cafe/widgets/SiteFooter.dart';
 import 'package:flutter_cafe/widgets/SiteHeader.dart';
@@ -16,30 +15,6 @@ class MenuPagesScreen extends StatefulWidget {
   @override
   State<MenuPagesScreen> createState() => _MenuPagesScreenState();
 }
-
-// class Dish {
-//   final String id;
-//   final String name;
-//   final String price;
-//   final String imagesUrl;
-
-//   Dish({
-//     required this.id,
-//     required this.name,
-//     required this.price,
-//     required this.imagesUrl,
-//   });
-
-//   factory Dish.fromFirestore(DocumentSnapshot doc) {
-//     final data = doc.data() as Map<String, dynamic>;
-//     return Dish(
-//       id: doc.id,
-//       name: data['name'] as String,
-//       price: data['price'] as String,
-//       imagesUrl: data['imagesUrl'] as String,
-//     );
-//   }
-// }
 
 class _MenuPagesScreenState extends State<MenuPagesScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -82,12 +57,6 @@ class _MenuPagesScreenState extends State<MenuPagesScreen> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Container(
-      // decoration: BoxDecoration(
-      //   image: DecorationImage(
-      //     image: AssetImage('assets/images/фон3.jpg'),
-      //     fit: BoxFit.cover,
-      //   ),
-      // ),
       child: Scaffold(
         key: _scaffoldKey,
         drawer: _dialogMenu(context),
