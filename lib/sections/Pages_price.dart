@@ -79,7 +79,7 @@ class ContactScreen extends StatelessWidget {
       //padding: EdgeInsets.only(top: 40, left: 20, right: 20, bottom: 40),
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: AssetImage("assets/images/fonprice.png"),
+          image: AssetImage("assets/images/cardPrice.jpg"),
           fit: BoxFit.contain,
         ),
         //color: Colors.white,
@@ -98,7 +98,7 @@ class ContactScreen extends StatelessWidget {
         children: [
           Expanded(
             child: Padding(
-              padding: EdgeInsets.only(top: 40, left: 30),
+              padding: EdgeInsets.only(top: 20, left: 30),
               child: Text(
                 title,
                 style: TextStyle(fontSize: 20, color: Color(0xFF3A2B28)),
