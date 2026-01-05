@@ -36,8 +36,8 @@ class _CatCardState extends State<CatCard> {
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
+            color: Colors.black.withOpacity(0.3),
+            blurRadius: 5,
             spreadRadius: 2,
           ),
         ],

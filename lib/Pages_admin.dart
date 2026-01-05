@@ -56,8 +56,7 @@ class _AdminScreenState extends State<AdminScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
-      backgroundColor: Color.fromARGB(255, 255, 252, 231),
+      backgroundColor: Color.fromARGB(255, 229, 217, 201),
       body: Center(
         child: Padding(
           padding: EdgeInsets.all(20),

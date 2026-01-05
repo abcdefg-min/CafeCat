@@ -87,8 +87,8 @@ class ContactScreen extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.3),
-            blurRadius: 3,
-            spreadRadius: 1,
+            blurRadius: 5,
+            spreadRadius: 0.5,
           ),
         ],
       ),
