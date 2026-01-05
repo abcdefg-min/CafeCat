@@ -9,6 +9,7 @@ class AdminDishesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        SizedBox(height: isMobile ? 15 : 20),
         Text(
           'Управление блюдами дня',
           style: TextStyle(

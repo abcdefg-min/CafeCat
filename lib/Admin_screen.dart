@@ -83,6 +83,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 currentTab: _currentTab,
                 onTabChanged: _onTabChanged,
                 isMobile: isMobile,
+                parentContext: context,
               ),
               
               Expanded(

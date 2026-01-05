@@ -9,10 +9,12 @@ class AdminCatScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        SizedBox(height: isMobile ? 15 : 20),
         Text(
           'Управление котами',
           style: TextStyle(
             fontSize: isMobile ? 20 : 35,
+            fontWeight: FontWeight.bold,
             color: Color(0xFF3A2B28),
           ),
         ),
