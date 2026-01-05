@@ -1,121 +1,127 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_cafe/Admin_screen.dart';
-import 'package:flutter_cafe/Pages_admin.dart';
-import '../Pages3_cat.dart';
-import '../Pages_1.dart';
-import '../Pages4_menu.dart';
-import '../Pages5_contact.dart';
-import '../Pages_admin.dart';
 
-class HeaderSiteAdmin extends StatelessWidget {
+class AdminHeader extends StatelessWidget {
+  final int currentTab;
+  final Function(int) onTabChanged;
   final bool isMobile;
-  final VoidCallback onMenuTap;
 
-  const HeaderSiteAdmin({
+  const AdminHeader({
     super.key,
+    required this.currentTab,
+    required this.onTabChanged,
     required this.isMobile,
-    required this.onMenuTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 20),
       color: Color(0xFF3A2B28),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Image.asset(
-            'assets/images/logo.png',
-            width: isMobile ? 45 : 50,
-            height: isMobile ? 45 : 50,
-          ),
-
-          if (!isMobile)
-            Expanded(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _navButton('Бронировании', () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => CatScreen()),
-                    );
-                  }, isMobile),
-                  _navButton('Редактор блюд дня', () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => MenuPagesScreen(),
-                      ),
-                    );
-                  }, isMobile),
-                  _navButton('Редактор котов', () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ScreenContact()),
-                    );
-                  }, isMobile),
-                ],
-              ),
-            ),
-          IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => PagesScreen()),
-              );
-            },
-            icon: Icon(
-              Icons.logout,
-              color: Color.fromARGB(255, 255, 252, 231),
-              size: isMobile ? 24 : 30,
-            ),
-          ),
-          if (isMobile)
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 20.0 : 120.0,
+          vertical: isMobile ? 15.0 : 20.0,
+        ),
+        child: Column(
+          children: [
+            // Логотип и заголовок
             Row(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  onPressed: onMenuTap,
-                  icon: Icon(
-                    Icons.menu,
-                    color: Color.fromARGB(255, 255, 252, 231),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => AdminScreen(),
+                Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/logo.png',
+                      width: isMobile ? 40 : 60,
+                      height: isMobile ? 40 : 60,
+                    ),
+                    SizedBox(width: isMobile ? 10 : 20),
+                    Text(
+                      'Панель админа',
+                      style: TextStyle(
+                        fontSize: isMobile ? 18 : 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
-                    );
-                  },
-                  icon: Icon(
-                    Icons.logout,
-                    color: Color.fromARGB(255, 255, 252, 231),
-                    size: isMobile ? 24 : 30,
-                  ),
+                    ),
+                  ],
                 ),
+                if (!isMobile)
+                  IconButton(
+                    icon: Icon(Icons.exit_to_app, color: Colors.white),
+                    onPressed: () {
+                      Navigator.pushReplacementNamed(context, '/');
+                    },
+                  ),
               ],
             ),
+
+            SizedBox(height: isMobile ? 15 : 25),
+
+            // Навигационные вкладки
+            isMobile ? _buildMobileTabs() : _buildDesktopTabs(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopTabs() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildTabButton(0, 'Бронирования', Icons.calendar_today),
+        SizedBox(width: 20),
+        _buildTabButton(1, 'Коты', Icons.pets),
+        SizedBox(width: 20),
+        _buildTabButton(2, 'Блюда дня', Icons.restaurant),
+      ],
+    );
+  }
+
+  Widget _buildMobileTabs() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _buildTabButton(0, 'Брони', Icons.calendar_today),
+          SizedBox(width: 15),
+          _buildTabButton(1, 'Коты', Icons.pets),
+          SizedBox(width: 15),
+          _buildTabButton(2, 'Блюда', Icons.restaurant),
         ],
       ),
     );
   }
 
-  Widget _navButton(String title, VoidCallback onPressed, bool isMobile) {
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 20),
-      child: TextButton(
-        onPressed: onPressed,
-        child: Text(
-          title,
-          style: TextStyle(
-            fontSize: isMobile ? 15 : 20,
-            color: Color.fromARGB(255, 255, 252, 231),
+  Widget _buildTabButton(int tabIndex, String title, IconData icon) {
+    final isSelected = currentTab == tabIndex;
+
+    return ElevatedButton.icon(
+      onPressed: () => onTabChanged(tabIndex),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: isSelected
+            ? Color.fromARGB(255, 229, 217, 201)
+            : Colors.transparent,
+        foregroundColor: isSelected ? Color(0xFF3A2B28) : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: BorderSide(
+            color: isSelected
+                ? Color.fromARGB(255, 229, 217, 201)
+                : Colors.white54,
           ),
+        ),
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 12 : 20,
+          vertical: isMobile ? 8 : 12,
+        ),
+      ),
+      icon: Icon(icon, size: isMobile ? 18 : 24),
+      label: Text(
+        title,
+        style: TextStyle(
+          fontSize: isMobile ? 14 : 16,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
     );
