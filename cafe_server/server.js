@@ -50,20 +50,14 @@ app.post('/api/bookings', async (req, res) => {
     if (!tableId) missingFields.push('tableId');
     
     if (missingFields.length > 0) {
-        console.error('❌ Отсутствуют поля:', missingFields);
+        console.error('Отсутствуют поля:', missingFields);
         return res.status(400).json({ 
             error: 'Не хватает данных',
             missingFields: missingFields 
         });
     }
 
-    // 🔴 Проверяем, что все поля есть
-    // if (!date || !time || !name || !phone || !tableId) {
-    //     return res.status(400).json({ error: 'Не хватает данных' });
-    // }
-
     try {
-        // Добавляем секунды, если их нет
         const timeWithSeconds = time.length === 5 ? `${time}:00` : time;
 
         const bookingDateTime = new Date(`${date}T${timeWithSeconds}+03:00`);
@@ -88,7 +82,7 @@ app.post('/api/bookings', async (req, res) => {
         res.status(201).json({ id: result.rows[0].id });
 
     } catch (err) {
-        console.error('❌ Ошибка бронирования:', err);
+        console.error('Ошибка бронирования:', err);
         res.status(500).json({ error: 'Ошибка бронирования', details: err.message });
     }
 });
@@ -100,7 +94,7 @@ app.get('/api/bookings', async (req, res) => {
         );
         res.json(result.rows);
     } catch (err) {
-        console.error('❌ Ошибка в /api/bookings:', err.message);
+        console.error('Ошибка в /api/bookings:', err.message);
         res.status(500).json({ error: 'Ошибка загрузки', details: err.message });
     }
 });
@@ -157,6 +151,127 @@ app.get('/api/cats', async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Ошибка загрузки котов' });
+    }
+});
+
+// POST создать нового кота
+app.post('/api/cats', async (req, res) => {
+    const { name, gender, description, image_url, hover_url } = req.body;
+    
+    // Валидация
+    if (!name || !gender) {
+        return res.status(400).json({ 
+            error: 'Обязательные поля: name, gender' 
+        });
+    }
+    
+    try {
+        // Генерируем ID (можно использовать UUID или оставить как есть)
+        const id = `cat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        const result = await pool.query(
+            `INSERT INTO cats (id, name, gender, description, "image_url", "hover_url") 
+             VALUES ($1, $2, $3, $4, $5, $6) 
+             RETURNING *`,
+            [id, name, gender, description || null, image_url || null, hover_url || null]
+        );
+        
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        console.error('Ошибка создания кота:', err);
+        res.status(500).json({ 
+            error: 'Ошибка создания кота', 
+            details: err.message 
+        });
+    }
+});
+
+// PUT обновить кота
+app.put('/api/cats/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name, gender, description, image_url, hover_url } = req.body;
+    
+    console.log(`🔄 PUT запрос для кота ID: ${id}`);
+    console.log('📦 Данные:', { name, gender });
+    
+    if (!name || !gender) {
+        return res.status(400).json({ 
+            error: 'Обязательные поля: name, gender',
+            received: { name, gender }
+        });
+    }
+    
+    try {
+        // Сначала проверим существование кота
+        const checkResult = await pool.query(
+            'SELECT id FROM cats WHERE id = $1',
+            [id]
+        );
+        
+        console.log(`🔍 Найдено котов с ID ${id}: ${checkResult.rows.length}`);
+        
+        if (checkResult.rows.length === 0) {
+            return res.status(404).json({ 
+                error: `Кот с ID "${id}" не найден`,
+                availableIds: (await pool.query('SELECT id FROM cats')).rows.map(r => r.id)
+            });
+        }
+        
+        const result = await pool.query(
+            `UPDATE cats 
+             SET name = $1, 
+                 gender = $2, 
+                 description = $3, 
+                 "image_url" = $4, 
+                 "hover_url" = $5,
+                 updated_at = NOW()
+             WHERE id = $6 
+             RETURNING *`,
+            [name, gender, description || null, image_url || null, hover_url || null, id]
+        );
+        
+        console.log(`Кот обновлен: ${result.rows[0].name}`);
+        
+        res.json({
+            success: true,
+            cat: result.rows[0]
+        });
+        
+    } catch (err) {
+        console.error('Ошибка обновления кота:', err);
+        res.status(500).json({ 
+            error: 'Ошибка обновления кота', 
+            details: err.message,
+            stack: err.stack
+        });
+    }
+});
+
+// DELETE удалить кота
+app.delete('/api/cats/:id', async (req, res) => {
+    const { id } = req.params;
+    
+    try {
+        const result = await pool.query(
+            'DELETE FROM cats WHERE id = $1 RETURNING id',
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Кот не найден' });
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Кот удален',
+            id: result.rows[0].id 
+        });
+    } catch (err) {
+        console.error('Ошибка удаления кота:', err);
+        res.status(500).json({ 
+            error: 'Ошибка удаления кота', 
+            details: err.message 
+        });
     }
 });
 
@@ -283,5 +398,9 @@ cron.schedule('*/10 * * * *', async () => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`🟢 Сервер запущен на http://localhost:${PORT}`);
+    console.log(`!!! Сервер запущен на http://localhost:${PORT}`);
 });
+
+const requireAdmin = async (req, res, next) => {
+    next();
+}
