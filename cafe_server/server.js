@@ -7,7 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-//подключение к бд
+// Подключение к БД
 const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
@@ -16,32 +16,22 @@ const pool = new Pool({
     port: 5433,
 });
 
+// Проверка подключения
 pool.query('SELECT NOW()', (err, res) => {
     if (err) {
-        console.error('❌ Ошибка подключения:', err.stack);
+        console.error('Ошибка подключения к БД:', err.stack);
     } else {
-        console.log('✅ Подключение успешно!', res.rows[0]);
+        console.log('Подключение к БД успешно!', res.rows[0]);
     }
-    //pool.end();
 });
 
-// POST api/bookings
+//БРОНИ
 app.post('/api/bookings', async (req, res) => {
-    console.log('⚠️ Пришёл запрос:', req.body);
-    console.log('📦 Тело запроса:', JSON.stringify(req.body, null, 2));
-    console.log('📊 Поля:', {
-        date: req.body.date,
-        time: req.body.time,
-        name: req.body.name,
-        phone: req.body.phone,
-        email: req.body.email,
-        guests: req.body.guests,
-        tableId: req.body.tableId
-    });
-
+    console.log('⚠️ Пришёл запрос на бронирование:', req.body);
+    
     const { name, phone, email, date, time, guests, tableId } = req.body;
 
-    // Проверяем все обязательные поля
+    // Проверка обязательных полей
     const missingFields = [];
     if (!date) missingFields.push('date');
     if (!time) missingFields.push('time');
@@ -53,13 +43,12 @@ app.post('/api/bookings', async (req, res) => {
         console.error('Отсутствуют поля:', missingFields);
         return res.status(400).json({ 
             error: 'Не хватает данных',
-            missingFields: missingFields 
+            missingFields 
         });
     }
 
     try {
         const timeWithSeconds = time.length === 5 ? `${time}:00` : time;
-
         const bookingDateTime = new Date(`${date}T${timeWithSeconds}+03:00`);
 
         if (isNaN(bookingDateTime.getTime())) {
@@ -99,13 +88,44 @@ app.get('/api/bookings', async (req, res) => {
     }
 });
 
-// GET /api/tables
-app.get('/api/tables', async (req, res) => {
-    const result = await pool.query('SELECT id, x_percent, y_percent FROM tables');
-    res.json(result.rows);
+app.put('/api/bookings/:id', async (req, res) => {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['pending', 'confirmed', 'cancelled', 'expired'].includes(status)) {
+        return res.status(400).json({ error: 'Некорректный статус' });
+    }
+
+    try {
+        const result = await pool.query(
+            `UPDATE bookings 
+             SET status = $1
+             WHERE id = $2 RETURNING *`,
+            [status, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Бронь не найдена' });
+        }
+
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error('Ошибка обновления брони:', err);
+        res.status(500).json({ error: 'Ошибка обновления брони' });
+    }
 });
 
-// GET /api/occupied-tables?date=2025-12-10&time=18:00
+//СТОЛЫ
+app.get('/api/tables', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, x_percent, y_percent FROM tables');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Ошибка загрузки столов:', err);
+        res.status(500).json({ error: 'Ошибка загрузки столов' });
+    }
+});
+
 app.get('/api/occupied-tables', async (req, res) => {
     try {
         const { date, time } = req.query;
@@ -114,13 +134,13 @@ app.get('/api/occupied-tables', async (req, res) => {
             return res.status(400).json({ error: 'Необходимы параметры date и time' });
         }
         
-        // Проверка даты
+        // Проверка формата даты
         const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
         if (!dateRegex.test(date)) {
             return res.status(400).json({ error: 'Неверный формат даты. Используйте YYYY-MM-DD' });
         }
         
-        // Проверка времени (HH:MM или HH:MM:SS)
+        // Проверка формата времени
         const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/;
         if (!timeRegex.test(time)) {
             return res.status(400).json({ error: 'Неверный формат времени' });
@@ -132,7 +152,7 @@ app.get('/api/occupied-tables', async (req, res) => {
              WHERE date = $1::DATE 
                AND time = $2::TIME 
                AND "expires_at" > NOW()
-               AND status NOT IN ('cancelled', 'expired')`, // Добавьте проверку статуса
+               AND status NOT IN ('cancelled', 'expired')`,
             [date, time]
         );
         
@@ -143,22 +163,22 @@ app.get('/api/occupied-tables', async (req, res) => {
     }
 });
 
-// GET /api/cats
+//КОТЫ
 app.get('/api/cats', async (req, res) => {
     try {
-        const result = await pool.query('SELECT id, name, description, gender, "image_url", "hover_url" FROM cats');
+        const result = await pool.query(
+            'SELECT id, name, description, gender, "image_url", "hover_url" FROM cats'
+        );
         res.json(result.rows);
     } catch (err) {
-        console.error(err);
+        console.error('Ошибка загрузки котов:', err);
         res.status(500).json({ error: 'Ошибка загрузки котов' });
     }
 });
 
-// POST создать нового кота
 app.post('/api/cats', async (req, res) => {
     const { name, gender, description, image_url, hover_url } = req.body;
     
-    // Валидация
     if (!name || !gender) {
         return res.status(400).json({ 
             error: 'Обязательные поля: name, gender' 
@@ -166,7 +186,6 @@ app.post('/api/cats', async (req, res) => {
     }
     
     try {
-        // Генерируем ID (можно использовать UUID или оставить как есть)
         const id = `cat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         
         const result = await pool.query(
@@ -186,34 +205,26 @@ app.post('/api/cats', async (req, res) => {
     }
 });
 
-// PUT обновить кота
 app.put('/api/cats/:id', async (req, res) => {
     const { id } = req.params;
     const { name, gender, description, image_url, hover_url } = req.body;
     
-    console.log(`🔄 PUT запрос для кота ID: ${id}`);
-    console.log('📦 Данные:', { name, gender });
-    
     if (!name || !gender) {
         return res.status(400).json({ 
-            error: 'Обязательные поля: name, gender',
-            received: { name, gender }
+            error: 'Обязательные поля: name, gender'
         });
     }
     
     try {
-        // Сначала проверим существование кота
+        // Проверка существования кота
         const checkResult = await pool.query(
             'SELECT id FROM cats WHERE id = $1',
             [id]
         );
         
-        console.log(`🔍 Найдено котов с ID ${id}: ${checkResult.rows.length}`);
-        
         if (checkResult.rows.length === 0) {
             return res.status(404).json({ 
-                error: `Кот с ID "${id}" не найден`,
-                availableIds: (await pool.query('SELECT id FROM cats')).rows.map(r => r.id)
+                error: `Кот с ID "${id}" не найден`
             });
         }
         
@@ -230,8 +241,6 @@ app.put('/api/cats/:id', async (req, res) => {
             [name, gender, description || null, image_url || null, hover_url || null, id]
         );
         
-        console.log(`Кот обновлен: ${result.rows[0].name}`);
-        
         res.json({
             success: true,
             cat: result.rows[0]
@@ -241,13 +250,11 @@ app.put('/api/cats/:id', async (req, res) => {
         console.error('Ошибка обновления кота:', err);
         res.status(500).json({ 
             error: 'Ошибка обновления кота', 
-            details: err.message,
-            stack: err.stack
+            details: err.message
         });
     }
 });
 
-// DELETE удалить кота
 app.delete('/api/cats/:id', async (req, res) => {
     const { id } = req.params;
     
@@ -275,76 +282,386 @@ app.delete('/api/cats/:id', async (req, res) => {
     }
 });
 
-// GET api/menu/today
-app.get('/api/daily_menus', async (req, res) => {
-    const today = new Date();
-    const dateStr = today.toISOString().split('T')[0];
-
+//БЛЮДА
+app.get('/api/dishes', async (req, res) => {
     try {
-        let result = await pool.query(
+        console.log('Запрос на получение всех блюд');
+        
+        const result = await pool.query(`
+            SELECT 
+                id, 
+                name, 
+                category, 
+                price, 
+                is_available, 
+                images_url, 
+                description,
+                created_at 
+            FROM dishes 
+            ORDER BY created_at DESC
+        `);
+        
+        console.log(`Найдено ${result.rows.length} блюд`);
+        res.json(result.rows);
+        
+    } catch (err) {
+        console.error('Ошибка при получении блюд:', err);
+        res.status(500).json({ 
+            error: 'Ошибка сервера при получении блюд',
+            details: err.message 
+        });
+    }
+});
+
+app.get('/api/dishes/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(`Запрос блюда с ID: ${id}`);
+        
+        const result = await pool.query(
+            'SELECT * FROM dishes WHERE id = $1',
+            [id]
+        );
+        
+        if (result.rows.length === 0) {
+            console.log(`Блюдо с ID ${id} не найдено`);
+            return res.status(404).json({ error: 'Блюдо не найдено' });
+        }
+        
+        console.log(`Блюдо найдено: ${result.rows[0].name}`);
+        res.json(result.rows[0]);
+        
+    } catch (err) {
+        console.error('Ошибка при получении блюда:', err);
+        res.status(500).json({ 
+            error: 'Ошибка сервера', 
+            details: err.message 
+        });
+    }
+});
+
+app.post('/api/dishes', async (req, res) => {
+    try {
+        console.log('Запрос на создание блюда:', req.body);
+        
+        const { 
+            name, 
+            category, 
+            price, 
+            is_available = true, 
+            images_url, 
+            description 
+        } = req.body;
+
+        // Валидация
+        if (!name || !category || price === undefined) {
+            console.error('Отсутствуют обязательные поля');
+            return res.status(400).json({ 
+                error: 'Поля name, category и price обязательны' 
+            });
+        }
+
+        const priceNum = parseFloat(price);
+        if (isNaN(priceNum) || priceNum <= 0) {
+            console.error('Некорректная цена:', price);
+            return res.status(400).json({ 
+                error: 'Цена должна быть положительным числом' 
+            });
+        }
+
+        // Генерация ID
+        const id = `dish_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        const result = await pool.query(
+            `INSERT INTO dishes (
+                id, 
+                name, 
+                category, 
+                price, 
+                is_available, 
+                images_url, 
+                description, 
+                created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            RETURNING *`,
+            [id, name, category, priceNum, is_available, images_url || null, description || null]
+        );
+
+        console.log(`Блюдо создано: ${result.rows[0].name}`);
+        res.status(201).json(result.rows[0]);
+        
+    } catch (err) {
+        console.error('Ошибка при создании блюда:', err);
+        res.status(500).json({ 
+            error: 'Ошибка сервера', 
+            details: err.message,
+            stack: err.stack 
+        });
+    }
+});
+
+app.put('/api/dishes/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { 
+            name, 
+            category, 
+            price, 
+            is_available, 
+            images_url, 
+            description 
+        } = req.body;
+
+        console.log(`🔄 PUT запрос для блюда ID: ${id}`);
+        console.log('📦 Данные:', req.body);
+
+        // Проверяем существование блюда
+        const checkResult = await pool.query(
+            'SELECT id FROM dishes WHERE id = $1',
+            [id]
+        );
+
+        if (checkResult.rows.length === 0) {
+            console.error(`Блюдо с ID ${id} не найдено`);
+            return res.status(404).json({ error: 'Блюдо не найдено' });
+        }
+
+        // Валидация цены
+        if (price !== undefined) {
+            const priceNum = parseFloat(price);
+            if (isNaN(priceNum) || priceNum <= 0) {
+                console.error('Некорректная цена:', price);
+                return res.status(400).json({ 
+                    error: 'Цена должна быть положительным числом' 
+                });
+            }
+        }
+
+        const result = await pool.query(
+            `UPDATE dishes SET 
+                name = COALESCE($1, name),
+                category = COALESCE($2, category),
+                price = COALESCE($3, price),
+                is_available = COALESCE($4, is_available),
+                images_url = COALESCE($5, images_url),
+                description = COALESCE($6, description),
+                updated_at = NOW()
+            WHERE id = $7
+            RETURNING *`,
+            [
+                name || null, 
+                category || null, 
+                price !== undefined ? parseFloat(price) : null, 
+                is_available !== undefined ? is_available : null,
+                images_url || null, 
+                description || null, 
+                id
+            ]
+        );
+
+        console.log(`Блюдо обновлено: ${result.rows[0].name}`);
+        
+        res.json({
+            success: true,
+            dish: result.rows[0]
+        });
+        
+    } catch (err) {
+        console.error('Ошибка при обновлении блюда:', err);
+        res.status(500).json({ 
+            error: 'Ошибка обновления блюда', 
+            details: err.message,
+            stack: err.stack
+        });
+    }
+});
+
+app.delete('/api/dishes/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        console.log(`Запрос на удаление блюда ID: ${id}`);
+
+        const result = await pool.query(
+            'DELETE FROM dishes WHERE id = $1 RETURNING id, name',
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            console.error(`Блюдо с ID ${id} не найдено`);
+            return res.status(404).json({ error: 'Блюдо не найдено' });
+        }
+
+        console.log(`Блюдо удалено: ${result.rows[0].name}`);
+        
+        res.json({ 
+            success: true, 
+            message: 'Блюдо удалено',
+            id: result.rows[0].id,
+            name: result.rows[0].name
+        });
+        
+    } catch (err) {
+        console.error('Ошибка при удалении блюда:', err);
+        res.status(500).json({ 
+            error: 'Ошибка удаления блюда', 
+            details: err.message 
+        });
+    }
+});
+
+app.get('/api/dishes/category/:category', async (req, res) => {
+    try {
+        const { category } = req.params;
+        console.log(`Запрос блюд категории: ${category}`);
+        
+        const result = await pool.query(
+            'SELECT * FROM dishes WHERE category = $1 AND is_available = true ORDER BY name',
+            [category]
+        );
+        
+        console.log(`Найдено ${result.rows.length} блюд в категории ${category}`);
+        res.json(result.rows);
+        
+    } catch (err) {
+        console.error('Ошибка при получении блюд по категории:', err);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+app.get('/api/dishes/search/:query', async (req, res) => {
+    try {
+        const { query } = req.params;
+        console.log(`Поиск блюд: ${query}`);
+        
+        const result = await pool.query(
+            `SELECT * FROM dishes 
+             WHERE (name ILIKE $1 
+             OR description ILIKE $1 
+             OR category ILIKE $1)
+             AND is_available = true
+             ORDER BY name`,
+            [`%${query}%`]
+        );
+        
+        console.log(`Найдено ${result.rows.length} блюд по запросу "${query}"`);
+        res.json(result.rows);
+        
+    } catch (err) {
+        console.error('Ошибка при поиске блюд:', err);
+        res.status(500).json({ error: 'Ошибка сервера' });
+    }
+});
+
+//БЛЮДА ДНЯ
+app.get('/api/daily_menus', async (req, res) => {
+    try {
+        const today = new Date();
+        const dateStr = today.toISOString().split('T')[0];
+
+        console.log(`Запрос меню на дату: ${dateStr}`);
+
+        // Ищем существующее меню
+        const result = await pool.query(
             'SELECT * FROM daily_menus WHERE date_str = $1',
             [dateStr]
         );
 
-        if (result.rows.length == 0) {
+        if (result.rows.length === 0) {
+            console.log(`Меню на ${dateStr} не найдено, создаем новое...`);
+            
+            // Получаем все доступные блюда
             const allDishes = await pool.query(
-                'SELECT id, name, price, "images_url" FROM dishes WHERE "is_available" = true'
+                'SELECT id, name, price, images_url FROM dishes WHERE is_available = true'
             );
 
             if (allDishes.rows.length < 3) {
-                return res.status(400).json({ error: 'Недостаточно блюд для формирования меню' });
+                console.error('Недостаточно доступных блюд');
+                return res.status(400).json({ 
+                    error: 'Недостаточно блюд для формирования меню',
+                    available: allDishes.rows.length
+                });
             }
 
+            // Случайный выбор 3 блюд
             const shuffled = [...allDishes.rows].sort(() => 0.5 - Math.random());
             const selected = shuffled.slice(0, 3);
             const dishIds = selected.map(d => d.id);
 
+            console.log(`Выбраны блюда: ${selected.map(d => d.name).join(', ')}`);
+
             // Сохраняем в daily_menus
-            // Сохраняем в daily_menus — теперь с menu_date и generated_at
             await pool.query(
-                `INSERT INTO daily_menus (menu_date, date_str, "dishes_of_day", "generated_at")
-   VALUES ($1, $2, $3::jsonb, NOW())`,
+                `INSERT INTO daily_menus (menu_date, date_str, dishes_of_day, generated_at)
+                 VALUES ($1, $2, $3::jsonb, NOW())`,
                 [dateStr, dateStr, JSON.stringify(dishIds)]
             );
 
             return res.json(selected);
         } else {
-            const dishIds = result.rows[0].dishes_of_day; // предполагается, что это массив
+            // Получаем блюда из существующего меню
+            const menu = result.rows[0];
+            console.log(`Найдено существующее меню: ${JSON.stringify(menu.dishes_of_day)}`);
+            
+            if (!menu.dishes_of_day || !Array.isArray(menu.dishes_of_day)) {
+                console.error('dishes_of_day не является массивом');
+                return res.status(500).json({ error: 'Некорректный формат меню' });
+            }
+
+            const dishIds = menu.dishes_of_day;
+            
+            // Если массив пустой
+            if (dishIds.length === 0) {
+                return res.json([]);
+            }
+
+            // Получаем данные о блюдах
             const placeholders = dishIds.map((_, i) => `$${i + 1}`).join(',');
-            const query = `
-        SELECT id, name, price, "images_url"
-        FROM dishes
-        WHERE id IN (${placeholders})
-      `;
-            const dishesResult = await pool.query(query, dishIds);
+            const dishesQuery = `
+                SELECT id, name, price, images_url
+                FROM dishes
+                WHERE id IN (${placeholders})
+            `;
+            
+            const dishesResult = await pool.query(dishesQuery, dishIds);
+            console.log(`Найдено ${dishesResult.rows.length} блюд в меню`);
+            
             res.json(dishesResult.rows);
         }
     } catch (err) {
         console.error('Ошибка загрузки меню:', err);
-        res.status(500).json({ error: 'Ошибка загрузки меню' });
+        res.status(500).json({ 
+            error: 'Ошибка загрузки меню', 
+            details: err.message,
+            stack: err.stack 
+        });
     }
-})
+});
 
+//АДМИН АУТЕНТИФИКАЦИЯ
 app.post('/api/admin/login', async (req, res) => {
-    const { email } = req.body;
-
     try {
+        const { email } = req.body;
+        console.log(`Попытка входа админа: ${email}`);
+
         const result = await pool.query(
             'SELECT * FROM admin WHERE email = $1 AND is_active = true',
             [email]
         );
 
         if (result.rows.length === 0) {
+            console.error('Пользователь не найден или неактивен');
             return res.status(401).json({ error: 'Пользователь не найден' });
         }
 
         const user = result.rows[0];
 
         if (user.role !== 'admin') {
+            console.error('Недостаточно прав');
             return res.status(403).json({ error: 'Доступ запрещён' });
         }
 
-        // Можно вернуть токен, но для простоты — просто данные
+        console.log(`Успешный вход: ${user.name}`);
+        
         res.json({
             id: user.id,
             name: user.name,
@@ -353,54 +670,25 @@ app.post('/api/admin/login', async (req, res) => {
         });
 
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Ошибка входа' });
-    }
-})
-
-//редактирвоание броней
-app.put('/api/bookings/:id', async (req, res) => {
-    const { id } = req.params;
-    const { status } = req.body;
-
-    if (!['pending', 'confirmed', 'cancelled', 'expired'].includes(status)) {
-        return res.status(400).json({ error: 'Некорректный статус' });
-    }
-
-    try {
-        const result = await pool.query(
-            `UPDATE bookings 
-             SET status = $1
-             WHERE id = $2 RETURNING *`,
-            [status, id]
-        );
-
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Бронь не найдена' });
-        }
-
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Ошибка обновления брони' });
+        console.error('Ошибка входа:', err);
+        res.status(500).json({ error: 'Ошибка входа', details: err.message });
     }
 });
 
-// Автоочистка каждые 10 минут
+// Автоочистка просроченных броней каждые 10 минут
 cron.schedule('*/10 * * * *', async () => {
     try {
-        const result = await pool.query('DELETE FROM bookings WHERE "expires_at" < NOW()');
-        console.log(`🧹 Удалено ${result.rowCount} просроченных броней`);
+        const result = await pool.query(
+            'DELETE FROM bookings WHERE "expires_at" < NOW()'
+        );
+        console.log(`Удалено ${result.rowCount} просроченных броней`);
     } catch (err) {
         console.error('Ошибка очистки:', err);
     }
 });
 
+//ЗАПУСК СЕРВАКА
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`!!! Сервер запущен на http://localhost:${PORT}`);
+    console.log(`Сервер запущен на http://localhost:${PORT}`);
 });
-
-const requireAdmin = async (req, res, next) => {
-    next();
-}

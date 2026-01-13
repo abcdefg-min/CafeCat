@@ -56,7 +56,7 @@ class _AdminCatScreenState extends State<AdminCatScreen> {
   Future<void> _saveCat() async {
     print('Сохраняем кота, ID: $_editingCatId');
     print('Данные: имя=${_nameController.text}, пол=${_genderController.text}');
-    
+
     if (_nameController.text.isEmpty || _genderController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Заполните обязательные поля')),
@@ -186,7 +186,7 @@ class _AdminCatScreenState extends State<AdminCatScreen> {
                     _isEditing ? 'Редактировать кота' : 'Добавить нового кота',
                     style: TextStyle(
                       fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: FontWeight.bold, 
                       color: const Color(0xFF3A2B28),
                     ),
                   ),
