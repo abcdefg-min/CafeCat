@@ -57,6 +57,8 @@ class AdminHeader extends StatelessWidget {
                 _buildTabButton(1, 'Коты', Icons.pets),
                 SizedBox(width: 16),
                 _buildTabButton(2, 'Блюда дня', Icons.restaurant),
+                SizedBox(width: 16),
+                _buildTabButton(3, 'Выбор блюд на день', Icons.restaurant_menu_outlined),
               ],
             ),
           ),
@@ -100,7 +102,7 @@ class AdminHeader extends StatelessWidget {
             IconButton(
               icon: Icon(Icons.exit_to_app, color: Colors.white, size: 20),
               onPressed: () {
-                Navigator.pushReplacementNamed(context, '/'); // Теперь контекст доступен
+                Navigator.pushReplacementNamed(context, '/');
               },
             ),
           ],
@@ -116,7 +118,9 @@ class AdminHeader extends StatelessWidget {
               SizedBox(width: 12),
               _buildTabButton(1, 'Коты', Icons.pets),
               SizedBox(width: 12),
-              _buildTabButton(2, 'Блюда', Icons.restaurant),
+              _buildTabButton(2, 'Добавление блюд', Icons.restaurant),
+              SizedBox(width: 12),
+              _buildTabButton(3, 'Выбор блюд дня', Icons.restaurant_menu_outlined),
             ],
           ),
         ),

@@ -10,14 +10,12 @@ import 'cat_details.dart';
 
 const double KHeaderHeight = 80.0;
 
-class CatScreen extends StatefulWidget {  
+class CatScreen extends StatefulWidget {
   const CatScreen({super.key});
 
   @override
   State<CatScreen> createState() => _CatScreenState();
 }
-
-
 
 class _CatScreenState extends State<CatScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -92,10 +90,11 @@ class _CatScreenState extends State<CatScreen> {
                       },
                     ),
 
-                    // Основной контент с min-height
+                    // Основной контент
                     Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Padding(
                           padding: EdgeInsets.symmetric(
@@ -121,45 +120,54 @@ class _CatScreenState extends State<CatScreen> {
                                     ),
                                     const SizedBox(height: 40),
                                     // Сетка котиков
-                                    LayoutBuilder(
-                                      builder: (context, constraints2) {
-                                        final screenWidth =
-                                            constraints2.maxWidth;
-                                        final crossAxisCount = screenWidth < 600
-                                            ? 1
-                                            : 5;
-                                        final itemSpacing = screenWidth < 600
-                                            ? 20.0
-                                            : 30.0;
-                                        final itemSize =
-                                            (screenWidth -
-                                                (crossAxisCount - 1) *
-                                                    itemSpacing) /
-                                            crossAxisCount;
+                                    Center(
+                                      child: LayoutBuilder(
+                                        builder: (context, constraints2) {
+                                          final screenWidth =
+                                              constraints2.maxWidth;
+                                          final crossAxisCount =
+                                              screenWidth < 600 ? 1 : 5;
+                                          final itemSpacing = screenWidth < 600
+                                              ? 20.0
+                                              : 30.0;
+                                          final itemSize =
+                                              (screenWidth -
+                                                  (crossAxisCount - 1) *
+                                                      itemSpacing) /
+                                              crossAxisCount;
 
-                                        return GridView.builder(
-                                          itemCount: cats.length,
-                                          shrinkWrap: true,
-                                          physics:
-                                              const NeverScrollableScrollPhysics(),
-                                          gridDelegate:
-                                              SliverGridDelegateWithFixedCrossAxisCount(
-                                                crossAxisCount: crossAxisCount,
-                                                crossAxisSpacing: itemSpacing,
-                                                mainAxisSpacing:
-                                                    itemSpacing * 1.2,
-                                                mainAxisExtent: itemSize + 60,
-                                              ),
-                                          itemBuilder: (context, index) {
-                                            final cat = cats[index];
-                                            return CatCardHover(
-                                              cat: cat,
-                                              itemSize: itemSize,
-                                              onTap: () => _showCatDetails(context, cat),
-                                            );
-                                          },
-                                        );
-                                      },
+                                          return Center(
+                                            child: GridView.builder(
+                                              itemCount: cats.length,
+                                              shrinkWrap: true,
+                                              physics:
+                                                  const NeverScrollableScrollPhysics(),
+                                              gridDelegate:
+                                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                                    crossAxisCount:
+                                                        crossAxisCount,
+                                                    crossAxisSpacing:
+                                                        itemSpacing,
+                                                    mainAxisSpacing:
+                                                        itemSpacing * 1.2,
+                                                    mainAxisExtent:
+                                                        itemSize + 60,
+                                                  ),
+                                              itemBuilder: (context, index) {
+                                                final cat = cats[index];
+                                                return CatCardHover(
+                                                  cat: cat,
+                                                  itemSize: itemSize,
+                                                  onTap: () => _showCatDetails(
+                                                    context,
+                                                    cat,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          );
+                                        },
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -181,7 +189,7 @@ class _CatScreenState extends State<CatScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return CatDetailDialog(cat: cat);
+        return Center(child: CatDetailDialog(cat: cat));
       },
     );
   }

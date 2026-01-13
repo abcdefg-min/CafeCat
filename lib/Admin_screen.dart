@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'widgets/SiteHeaderAdmin.dart';
 import 'Admin_cat.dart';
 import 'Admin_dishes.dart';
+import 'Admin_dailyMenus.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -112,7 +113,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 2: // Блюда дня
         return AdminDishesScreen(isMobile: isMobile);
       default:
-        return _buildBookingsContent(isMobile);
+        return AdminScreenDailyMenus(isMobile: isMobile);
     }
   }
 
@@ -123,10 +124,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         Text(
           'Управление бронированиями',
           style: TextStyle(
-            fontSize: isMobile ? 24 : 32,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF3A2B28),
-          ),
+              fontSize: isMobile ? 20 : 35,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF3A2B28),
+            ),
         ),
         SizedBox(height: isMobile ? 20 : 35),
         

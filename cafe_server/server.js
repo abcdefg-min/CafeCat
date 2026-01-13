@@ -801,6 +801,229 @@ app.delete('/api/daily_menus/:date', async (req, res) => {
     }
 });
 
+app.get('/api/daily-menus', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT * FROM daily_menus ORDER BY menu_date DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Ошибка загрузки меню:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Получить меню на конкретную дату
+app.get('/api/daily-menus/:date', async (req, res) => {
+  try {
+    const { date } = req.params;
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    
+    if (!dateRegex.test(date)) {
+      return res.status(400).json({ 
+        error: 'Неверный формат даты. Используйте YYYY-MM-DD' 
+      });
+    }
+    
+    const result = await pool.query(
+      'SELECT * FROM daily_menus WHERE menu_date = $1',
+      [date]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Меню не найдено',
+        date: date
+      });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Ошибка загрузки меню:', err);
+    res.status(500).json({ error: 'Ошибка сервера' });
+  }
+});
+
+// Создать новое меню
+app.post('/api/daily-menus', async (req, res) => {
+  try {
+    const { menu_date, dishes_of_day } = req.body;
+    
+    console.log('Создание меню:', { menu_date, dishes_of_day });
+    
+    // Проверка обязательных полей
+    if (!menu_date) {
+      return res.status(400).json({ 
+        error: 'Необходимо указать дату меню (menu_date)' 
+      });
+    }
+    
+    if (!dishes_of_day || !Array.isArray(dishes_of_day)) {
+      return res.status(400).json({ 
+        error: 'Необходимо указать массив блюд (dishes_of_day)' 
+      });
+    }
+    
+    // Проверка формата даты
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(menu_date)) {
+      return res.status(400).json({ 
+        error: 'Неверный формат даты. Используйте YYYY-MM-DD' 
+      });
+    }
+    
+    // Проверяем, существует ли уже меню на эту дату
+    const existingMenu = await pool.query(
+      'SELECT * FROM daily_menus WHERE menu_date = $1',
+      [menu_date]
+    );
+    
+    if (existingMenu.rows.length > 0) {
+      return res.status(400).json({ 
+        error: 'Меню на эту дату уже существует' 
+      });
+    }
+    
+    // Проверяем существование блюд (опционально)
+    if (dishes_of_day.length > 0) {
+      const placeholders = dishes_of_day.map((_, i) => `$${i + 1}`).join(',');
+      const checkQuery = `SELECT id FROM dishes WHERE id IN (${placeholders})`;
+      const checkResult = await pool.query(checkQuery, dishes_of_day);
+      
+      if (checkResult.rows.length !== dishes_of_day.length) {
+        return res.status(400).json({ 
+          error: 'Некоторые блюда не найдены в базе данных',
+          foundIds: checkResult.rows.map(r => r.id),
+          requestedIds: dishes_of_day
+        });
+      }
+    }
+    // Создаем новое меню
+    const result = await pool.query(
+      `INSERT INTO daily_menus 
+       (menu_date, date_str, dishes_of_day, generated_at) 
+       VALUES ($1, $2, $3::jsonb, NOW()) 
+       RETURNING *`,
+      [menu_date, menu_date, JSON.stringify(dishes_of_day)]
+    );
+    
+    console.log('Меню создано:', result.rows[0]);
+    
+    res.status(201).json({
+      message: 'Меню создано',
+      menu: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Ошибка создания меню:', err);
+    res.status(500).json({ 
+      error: 'Ошибка сервера при создании меню',
+      details: err.message 
+    });
+  }
+});
+
+// Обновить существующее меню
+app.put('/api/daily-menus/:date', async (req, res) => {
+  try {
+    const { date } = req.params;
+    const { dishes_of_day } = req.body;
+    
+    console.log('Обновление меню на дату:', date, dishes_of_day);
+    
+    // Проверка обязательных полей
+    if (!dishes_of_day || !Array.isArray(dishes_of_day)) {
+      return res.status(400).json({ 
+        error: 'Необходимо указать массив блюд (dishes_of_day)' 
+      });
+    }
+    
+    // Проверка формата даты
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(date)) {
+      return res.status(400).json({ 
+        error: 'Неверный формат даты. Используйте YYYY-MM-DD' 
+      });
+    }
+    
+    // Проверяем существование блюд (опционально)
+    if (dishes_of_day.length > 0) {
+      const placeholders = dishes_of_day.map((_, i) => `$${i + 1}`).join(',');
+      const checkQuery = `SELECT id FROM dishes WHERE id IN (${placeholders})`;
+      const checkResult = await pool.query(checkQuery, dishes_of_day);
+      
+      if (checkResult.rows.length !== dishes_of_day.length) {
+        return res.status(400).json({ 
+          error: 'Некоторые блюда не найдены в базе данных',
+          foundIds: checkResult.rows.map(r => r.id),
+          requestedIds: dishes_of_day
+        });
+      }
+    }
+    
+    // Обновляем меню
+    const result = await pool.query(
+      `UPDATE daily_menus 
+       SET dishes_of_day = $1::jsonb, 
+           generated_at = NOW() 
+       WHERE menu_date = $2 
+       RETURNING *`,
+      [JSON.stringify(dishes_of_day), date]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Меню не найдено' 
+      });
+    }
+    
+    console.log('Меню обновлено:', result.rows[0]);
+    
+    res.json({
+      message: 'Меню обновлено',
+      menu: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Ошибка обновления меню:', err);
+    res.status(500).json({ 
+      error: 'Ошибка сервера при обновлении меню',
+      details: err.message 
+    });
+  }
+});
+
+// Удалить меню
+app.delete('/api/daily-menus/:date', async (req, res) => {
+  try {
+    const { date } = req.params;
+    
+    console.log('Удаление меню на дату:', date);
+    
+    const result = await pool.query(
+      'DELETE FROM daily_menus WHERE menu_date = $1 RETURNING *',
+      [date]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        error: 'Меню не найдено' 
+      });
+    }
+    
+    console.log('Меню удалено:', result.rows[0]);
+    
+    res.json({ 
+      message: 'Меню удалено',
+      deletedMenu: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Ошибка удаления меню:', err);
+    res.status(500).json({ 
+      error: 'Ошибка сервера при удалении меню',
+      details: err.message 
+    });
+  }
+});
+
 
 //АДМИН АУТЕНТИФИКАЦИЯ--------------------------------------------------------
 app.post('/api/admin/login', async (req, res) => {
