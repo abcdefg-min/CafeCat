@@ -312,33 +312,6 @@ app.get('/api/dishes', async (req, res) => {
     }
 });
 
-app.get('/api/dishes/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        console.log(`Запрос блюда с ID: ${id}`);
-        
-        const result = await pool.query(
-            'SELECT * FROM dishes WHERE id = $1',
-            [id]
-        );
-        
-        if (result.rows.length === 0) {
-            console.log(`Блюдо с ID ${id} не найдено`);
-            return res.status(404).json({ error: 'Блюдо не найдено' });
-        }
-        
-        console.log(`Блюдо найдено: ${result.rows[0].name}`);
-        res.json(result.rows[0]);
-        
-    } catch (err) {
-        console.error('Ошибка при получении блюда:', err);
-        res.status(500).json({ 
-            error: 'Ошибка сервера', 
-            details: err.message 
-        });
-    }
-});
-
 app.post('/api/dishes', async (req, res) => {
     try {
         console.log('Запрос на создание блюда:', req.body);
@@ -405,100 +378,122 @@ app.put('/api/dishes/:id', async (req, res) => {
             category, 
             price, 
             is_available, 
-            images_url, 
+            images_url 
         } = req.body;
 
-        console.log(`PUT запрос для блюда ID: ${id}`);
-        console.log('Данные:', req.body);
+        console.log('PUT запрос для обновления блюда');
+        console.log(`ID блюда: ${id}`);
+        console.log('Данные запроса:', JSON.stringify(req.body, null, 2));
 
-        // Проверяем существование блюда
+        // Проверяем, есть ли блюдо в базе
         const checkResult = await pool.query(
-            'SELECT id FROM dishes WHERE id = $1',
+            'SELECT id, name FROM dishes WHERE id = $1',
             [id]
         );
 
+        console.log(`🔍 Проверка блюда: найдено ${checkResult.rows.length} записей`);
+
         if (checkResult.rows.length === 0) {
-            console.error(`Блюдо с ID ${id} не найдено`);
-            return res.status(404).json({ error: 'Блюдо не найдено' });
+            console.error(`Блюдо с ID "${id}" не найдено`);
+            return res.status(404).json({ 
+                error: 'Блюдо не найдено',
+                requestedId: id,
+                availableIds: (await pool.query('SELECT id FROM dishes LIMIT 10')).rows.map(r => r.id)
+            });
         }
 
-        // Валидация цены
+        // Валидация данных
+        const errors = [];
+        
+        if (name !== undefined && (!name || name.trim() === '')) {
+            errors.push('Имя блюда не может быть пустым');
+        }
+        
+        if (category !== undefined && (!category || category.trim() === '')) {
+            errors.push('Категория не может быть пустой');
+        }
+        
         if (price !== undefined) {
             const priceNum = parseFloat(price);
-            if (isNaN(priceNum) || priceNum <= 0) {
-                console.error('Некорректная цена:', price);
-                return res.status(400).json({ 
-                    error: 'Цена должна быть положительным числом' 
-                });
+            if (isNaN(priceNum)) {
+                errors.push('Цена должна быть числом');
+            } else if (priceNum < 0) {
+                errors.push('Цена не может быть отрицательной');
             }
         }
+        
+        if (errors.length > 0) {
+            console.error('Ошибки валидации:', errors);
+            return res.status(400).json({ 
+                error: 'Ошибки валидации',
+                details: errors 
+            });
+        }
 
-        const result = await pool.query(
-            `UPDATE dishes SET 
-                name = COALESCE($1, name),
-                category = COALESCE($2, category),
-                price = COALESCE($3, price),
-                is_available = COALESCE($4, is_available),
-                images_url = COALESCE($5, images_url),
-                updated_at = NOW()
-            WHERE id = $6
-            RETURNING *`,
-            [
-                name || null, 
-                category || null, 
-                price !== undefined ? parseFloat(price) : null, 
-                is_available !== undefined ? is_available : null,
-                images_url || null, 
-                id
-            ]
-        );
+        // Формируем данные для обновления
+        const updateFields = [];
+        const values = [];
+        let paramCounter = 1;
+
+        if (name !== undefined) {
+            updateFields.push(`name = $${paramCounter}`);
+            values.push(name);
+            paramCounter++;
+        }
+
+        if (category !== undefined) {
+            updateFields.push(`category = $${paramCounter}`);
+            values.push(category);
+            paramCounter++;
+        }
+
+        if (price !== undefined) {
+            updateFields.push(`price = $${paramCounter}`);
+            values.push(parseFloat(price));
+            paramCounter++;
+        }
+
+        if (is_available !== undefined) {
+            updateFields.push(`is_available = $${paramCounter}`);
+            values.push(is_available);
+            paramCounter++;
+        }
+
+        if (images_url !== undefined) {
+            updateFields.push(`images_url = $${paramCounter}`);
+            values.push(images_url);
+            paramCounter++;
+        }
+        // Добавляем ID в конец для условия WHERE
+        values.push(id);
+
+        const updateQuery = `
+            UPDATE dishes 
+            SET ${updateFields.join(', ')}
+            WHERE id = $${paramCounter}
+            RETURNING *
+        `;
+
+        console.log(`SQL запрос: ${updateQuery}`);
+        console.log(`Параметры: ${JSON.stringify(values)}`);
+
+        const result = await pool.query(updateQuery, values);
 
         console.log(`Блюдо обновлено: ${result.rows[0].name}`);
+        console.log(`Результат: ${JSON.stringify(result.rows[0])}`);
         
         res.json({
             success: true,
+            message: 'Блюдо успешно обновлено',
             dish: result.rows[0]
         });
         
     } catch (err) {
-        console.error('Ошибка при обновлении блюда:', err);
+        console.error('Ошибка при обновлении блюда:', err.message);
         res.status(500).json({ 
-            error: 'Ошибка обновления блюда', 
+            error: 'Внутренняя ошибка сервера при обновлении блюда',
             details: err.message,
-            stack: err.stack
-        });
-    }
-});
-
-app.delete('/api/dishes/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        console.log(`Запрос на удаление блюда ID: ${id}`);
-
-        const result = await pool.query(
-            'DELETE FROM dishes WHERE id = $1 RETURNING id, name',
-            [id]
-        );
-
-        if (result.rows.length === 0) {
-            console.error(`Блюдо с ID ${id} не найдено`);
-            return res.status(404).json({ error: 'Блюдо не найдено' });
-        }
-
-        console.log(`Блюдо удалено: ${result.rows[0].name}`);
-        
-        res.json({ 
-            success: true, 
-            message: 'Блюдо удалено',
-            id: result.rows[0].id,
-            name: result.rows[0].name
-        });
-        
-    } catch (err) {
-        console.error('Ошибка при удалении блюда:', err);
-        res.status(500).json({ 
-            error: 'Ошибка удаления блюда', 
-            details: err.message 
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
         });
     }
 });
@@ -785,7 +780,7 @@ app.delete('/api/daily_menus/:date', async (req, res) => {
             [date]
         );
 
-        if (result.eow.length === 0) {
+        if (result.rows.length === 0) {
             console.log(`Меню на ${date} не найдено`);
             return res.status(400).json({error: 'Меню не найдено'});
         }
@@ -794,7 +789,7 @@ app.delete('/api/daily_menus/:date', async (req, res) => {
         res.json({
             success: true,
             message: 'Меню удалено',
-            date: result.row[0].date_str
+            date: result.rows[0].date_str
         });
 
     } catch (err) {

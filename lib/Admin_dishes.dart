@@ -13,7 +13,6 @@ class AdminDishesScreen extends StatefulWidget {
 
 class _AdminDishesScreenState extends State<AdminDishesScreen> {
   List<Map<String, dynamic>> dishes = [];
-  
 
   bool isLoading = true;
 
@@ -27,7 +26,7 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
   String? _editingDishId;
   bool _isEditing = false;
 
-  // Список категорий для выпадающего списка 
+  // Список категорий для выпадающего списка
   final List<String> _categories = ['завтрак', 'обед', 'ужин'];
 
   @override
@@ -65,6 +64,22 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
 
   Future<void> _saveDish() async {
     print('Сохраняем блюдо, ID: $_editingDishId');
+    print('Данные формы:');
+    print('  Название: ${_nameController.text}');
+    print('  Категория: ${_categoryController.text}');
+    print('  Цена: ${_priceController.text}');
+    print('  Доступно: $_isAvailable');
+    print('  Изображение: ${_imageUrlController.text}');
+
+    // Проверка обязательных полей
+    if (_nameController.text.isEmpty || 
+        _categoryController.text.isEmpty || 
+        _priceController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Заполните обязательные поля')),
+      );
+      return;
+    }
 
     // Проверка цены
     final price = double.tryParse(_priceController.text);
@@ -85,27 +100,60 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
 
     try {
       if (_isEditing && _editingDishId != null) {
-        // Обновление существующего блюда
+        print('Отправляем PUT запрос для ID: $_editingDishId');
+        print('URL: http://localhost:3000/api/dishes/$_editingDishId');
+        print('Данные: ${jsonEncode(dishData)}');
+        
         final response = await http.put(
           Uri.parse('http://localhost:3000/api/dishes/$_editingDishId'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(dishData),
         );
 
+        print('Ответ сервера: ${response.statusCode}');
+        print('Тело ответа: ${response.body}');
+
         if (response.statusCode == 200) {
+          final responseData = jsonDecode(response.body);
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Блюдо обновлено')));
+          ).showSnackBar(SnackBar(
+            content: Text(responseData['message'] ?? 'Блюдо обновлено'),
+            duration: Duration(seconds: 3),
+          ));
           _resetForm();
           await _loadDishes();
+        } else {
+          try {
+            final errorData = jsonDecode(response.body);
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(
+              content: Text('Ошибка ${response.statusCode}: ${errorData['error'] ?? 'Неизвестная ошибка'}'),
+              duration: Duration(seconds: 5),
+            ));
+          } catch (e) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(
+              content: Text('Ошибка ${response.statusCode}: ${response.body}'),
+              duration: Duration(seconds: 5),
+            ));
+          }
         }
       } else {
         // Создание нового блюда
+        print('Отправляем POST запрос для нового блюда');
+        print('URL: http://localhost:3000/api/dishes');
+        
         final response = await http.post(
           Uri.parse('http://localhost:3000/api/dishes'),
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode(dishData),
         );
+
+        print('Ответ сервера: ${response.statusCode}');
+        print('Тело ответа: ${response.body}');
 
         if (response.statusCode == 201) {
           ScaffoldMessenger.of(
@@ -113,13 +161,33 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
           ).showSnackBar(const SnackBar(content: Text('Блюдо добавлено')));
           _resetForm();
           await _loadDishes();
+        } else {
+          try {
+            final errorData = jsonDecode(response.body);
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(
+              content: Text('Ошибка ${response.statusCode}: ${errorData['error'] ?? 'Неизвестная ошибка'}'),
+              duration: Duration(seconds: 5),
+            ));
+          } catch (e) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(
+              content: Text('Ошибка ${response.statusCode}: ${response.body}'),
+              duration: Duration(seconds: 5),
+            ));
+          }
         }
       }
     } catch (e) {
       print('Ошибка сохранения блюда: $e');
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('Ошибка: $e')));
+      ).showSnackBar(SnackBar(
+        content: Text('Ошибка сети: $e'),
+        duration: Duration(seconds: 5),
+      ));
     }
   }
 
@@ -214,17 +282,27 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
                   SizedBox(height: 12),
 
                   // Категория (выпадающий список)
-                  DropdownMenu<String>(
-                    controller: _categoryController,
-                    label: const Text('Категория', style: TextStyle(fontSize: 15),),
-                    dropdownMenuEntries: _categories
-                        .map(
-                          (category) => DropdownMenuEntry(
-                            value: category,
-                            label: category,
-                          ),
-                        )
-                        .toList(),
+                  DropdownButtonFormField<String>(
+                    value: _categoryController.text.isNotEmpty
+                        ? _categoryController.text
+                        : null,
+                    decoration: const InputDecoration(
+                      labelText: 'Категория',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: _categories.map((String category) {
+                      return DropdownMenuItem<String>(
+                        value: category,
+                        child: Text(category),
+                      );
+                    }).toList(),
+                    onChanged: (String? newValue) {
+                      setState(() {
+                        if (newValue != null) {
+                          _categoryController.text = newValue;
+                        }
+                      });
+                    },
                   ),
                   SizedBox(height: 12),
 

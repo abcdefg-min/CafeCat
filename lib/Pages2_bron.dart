@@ -517,6 +517,7 @@ class _BronScreenState extends State<BronScreen> {
           child: TextField(
             controller: _dateController,
             readOnly: true,
+            style: TextStyle(color: Color.fromARGB(255, 255, 252, 231)),
             decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
@@ -529,6 +530,7 @@ class _BronScreenState extends State<BronScreen> {
               ),
               hintText: "Дата",
               errorText: _dateError,
+              labelStyle: TextStyle(color: Color.fromARGB(255, 255, 252, 231)),
               hintStyle: TextStyle(color: Color.fromARGB(255, 255, 252, 231)),
             ),
             onTap: () async {
@@ -554,6 +556,7 @@ class _BronScreenState extends State<BronScreen> {
           child: TextField(
             controller: _timeController,
             readOnly: true,
+            style: TextStyle(color: Color.fromARGB(255, 255, 252, 231)),
             decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
@@ -588,6 +591,7 @@ class _BronScreenState extends State<BronScreen> {
           width: 700,
           child: TextField(
             controller: _guestsController,
+            style: TextStyle(color: Color.fromARGB(255, 255, 252, 231)),
             decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
                 borderSide: BorderSide(
