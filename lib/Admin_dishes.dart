@@ -13,6 +13,8 @@ class AdminDishesScreen extends StatefulWidget {
 
 class _AdminDishesScreenState extends State<AdminDishesScreen> {
   List<Map<String, dynamic>> dishes = [];
+  
+
   bool isLoading = true;
 
   // Контроллеры для формы
@@ -20,21 +22,13 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
   final TextEditingController _categoryController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _imageUrlController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
   bool _isAvailable = true;
 
   String? _editingDishId;
   bool _isEditing = false;
 
-  // Список категорий для выпадающего списка
-  final List<String> _categories = [
-    'завтрак',
-    'обед',
-    'ужин',
-    'десерт',
-    'напитки',
-    'закуски',
-  ];
+  // Список категорий для выпадающего списка 
+  final List<String> _categories = ['завтрак', 'обед', 'ужин'];
 
   @override
   void initState() {
@@ -72,16 +66,6 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
   Future<void> _saveDish() async {
     print('Сохраняем блюдо, ID: $_editingDishId');
 
-    // Валидация
-    if (_nameController.text.isEmpty ||
-        _categoryController.text.isEmpty ||
-        _priceController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Заполните обязательные поля')),
-      );
-      return;
-    }
-
     // Проверка цены
     final price = double.tryParse(_priceController.text);
     if (price == null || price <= 0) {
@@ -97,7 +81,6 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
       'price': price,
       'is_available': _isAvailable,
       'images_url': _imageUrlController.text,
-      'description': _descriptionController.text,
     };
 
     try {
@@ -169,7 +152,6 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
       _priceController.text = dish['price']?.toString() ?? '';
       _isAvailable = dish['is_available'] ?? true;
       _imageUrlController.text = dish['images_url'] ?? '';
-      _descriptionController.text = dish['description'] ?? '';
     });
   }
 
@@ -181,7 +163,6 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
       _categoryController.clear();
       _priceController.clear();
       _imageUrlController.clear();
-      _descriptionController.clear();
       _isAvailable = true;
     });
   }
@@ -226,7 +207,7 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
                   TextField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      labelText: 'Название блюда*',
+                      labelText: 'Название блюда',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -235,7 +216,7 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
                   // Категория (выпадающий список)
                   DropdownMenu<String>(
                     controller: _categoryController,
-                    label: const Text('Категория*'),
+                    label: const Text('Категория', style: TextStyle(fontSize: 15),),
                     dropdownMenuEntries: _categories
                         .map(
                           (category) => DropdownMenuEntry(
@@ -252,8 +233,8 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
                     controller: _priceController,
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
-                      labelText: 'Цена*',
-                      suffixText: '₽',
+                      labelText: 'Цена',
+                      suffixText: 'руб.',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -285,17 +266,6 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
                     ),
                   ),
                   SizedBox(height: 12),
-
-                  // Описание
-                  TextField(
-                    controller: _descriptionController,
-                    maxLines: 3,
-                    decoration: const InputDecoration(
-                      labelText: 'Описание блюда',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  SizedBox(height: 20),
 
                   // Кнопки
                   Row(
@@ -410,17 +380,6 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
                                     : Colors.red,
                               ),
                             ),
-                            if (dish['description'] != null &&
-                                dish['description'].isNotEmpty)
-                              Text(
-                                dish['description'].length > 50
-                                    ? '${dish['description'].substring(0, 50)}...'
-                                    : dish['description'],
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
                           ],
                         ),
                         trailing: Row(
@@ -475,7 +434,6 @@ class _AdminDishesScreenState extends State<AdminDishesScreen> {
     _categoryController.dispose();
     _priceController.dispose();
     _imageUrlController.dispose();
-    _descriptionController.dispose();
     super.dispose();
   }
 }

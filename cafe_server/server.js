@@ -25,7 +25,7 @@ pool.query('SELECT NOW()', (err, res) => {
     }
 });
 
-//БРОНИ
+//БРОНИ----------------------------------------------------------------
 app.post('/api/bookings', async (req, res) => {
     console.log('⚠️ Пришёл запрос на бронирование:', req.body);
     
@@ -115,7 +115,7 @@ app.put('/api/bookings/:id', async (req, res) => {
     }
 });
 
-//СТОЛЫ
+//СТОЛЫ----------------------------------------------------------------
 app.get('/api/tables', async (req, res) => {
     try {
         const result = await pool.query('SELECT id, x_percent, y_percent FROM tables');
@@ -163,7 +163,7 @@ app.get('/api/occupied-tables', async (req, res) => {
     }
 });
 
-//КОТЫ
+//КОТЫ----------------------------------------------------------------
 app.get('/api/cats', async (req, res) => {
     try {
         const result = await pool.query(
@@ -282,7 +282,7 @@ app.delete('/api/cats/:id', async (req, res) => {
     }
 });
 
-//БЛЮДА
+//------------------БЛЮДА----------------------------------------------------------------
 app.get('/api/dishes', async (req, res) => {
     try {
         console.log('Запрос на получение всех блюд');
@@ -295,7 +295,6 @@ app.get('/api/dishes', async (req, res) => {
                 price, 
                 is_available, 
                 images_url, 
-                description,
                 created_at 
             FROM dishes 
             ORDER BY created_at DESC
@@ -350,7 +349,6 @@ app.post('/api/dishes', async (req, res) => {
             price, 
             is_available = true, 
             images_url, 
-            description 
         } = req.body;
 
         // Валидация
@@ -380,11 +378,10 @@ app.post('/api/dishes', async (req, res) => {
                 price, 
                 is_available, 
                 images_url, 
-                description, 
                 created_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+            ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
             RETURNING *`,
-            [id, name, category, priceNum, is_available, images_url || null, description || null]
+            [id, name, category, priceNum, is_available, images_url || null]
         );
 
         console.log(`Блюдо создано: ${result.rows[0].name}`);
@@ -409,11 +406,10 @@ app.put('/api/dishes/:id', async (req, res) => {
             price, 
             is_available, 
             images_url, 
-            description 
         } = req.body;
 
-        console.log(`🔄 PUT запрос для блюда ID: ${id}`);
-        console.log('📦 Данные:', req.body);
+        console.log(`PUT запрос для блюда ID: ${id}`);
+        console.log('Данные:', req.body);
 
         // Проверяем существование блюда
         const checkResult = await pool.query(
@@ -444,9 +440,8 @@ app.put('/api/dishes/:id', async (req, res) => {
                 price = COALESCE($3, price),
                 is_available = COALESCE($4, is_available),
                 images_url = COALESCE($5, images_url),
-                description = COALESCE($6, description),
                 updated_at = NOW()
-            WHERE id = $7
+            WHERE id = $6
             RETURNING *`,
             [
                 name || null, 
@@ -454,7 +449,6 @@ app.put('/api/dishes/:id', async (req, res) => {
                 price !== undefined ? parseFloat(price) : null, 
                 is_available !== undefined ? is_available : null,
                 images_url || null, 
-                description || null, 
                 id
             ]
         );
@@ -536,7 +530,6 @@ app.get('/api/dishes/search/:query', async (req, res) => {
         const result = await pool.query(
             `SELECT * FROM dishes 
              WHERE (name ILIKE $1 
-             OR description ILIKE $1 
              OR category ILIKE $1)
              AND is_available = true
              ORDER BY name`,
@@ -552,7 +545,7 @@ app.get('/api/dishes/search/:query', async (req, res) => {
     }
 });
 
-//БЛЮДА ДНЯ
+//БЛЮДА ДНЯ----------------------------------------------------------------
 app.get('/api/daily_menus', async (req, res) => {
     try {
         const today = new Date();
@@ -636,6 +629,183 @@ app.get('/api/daily_menus', async (req, res) => {
         });
     }
 });
+
+//получить все меню
+app.get('/api/daily_menus/all', async (req, res) => {
+    try {
+        console.log('Запрос всех меню');
+        const result = await pool.query(
+            'SELECT * FROM daily_menus ORDER BY menu_date DESC'
+        );
+        console.log(`Найдено ${result.rows.length} меню`);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Ошибка загрузки меню ', err);
+        res.status(500).json({
+            error: 'Ошибка загрузки меню',
+            details: err.message
+        });
+    }
+});
+
+//получить меню на конкретную дату
+app.get('/api/daily_menus/:date', async (req, res) => {
+    try {
+        const {date} = req.params;
+        const dateRegex  = /^\d{4}-\d{2}-\d{2}$/;
+        if(!dateRegex.test(date)) {
+            return res.status(400).json({
+                error: 'Неверный формат даты'
+            });
+        }
+        const result = await pool.query(
+            'SELECT * FROM daily_menus WHERE date_str = $1',
+            [date]
+        );
+        
+        if (result.rows.length === 0) {
+            console.log(`Меню на ${date} не найдено`);
+            return res.json({ date, dishes: [] });
+        }
+        
+        const menu = result.rows[0];
+        const dishIds = menu.dishes_of_day || [];
+
+        // Получаем данные о блюдах
+        if (dishIds.length > 0) {
+            const placeholders = dishIds.map((_, i) => `$${i + 1}`).join(',');
+            const dishesQuery = `
+                SELECT id, name, price, images_url, category
+                FROM dishes
+                WHERE id IN (${placeholders})
+            `;
+            
+            const dishesResult = await pool.query(dishesQuery, dishIds);
+            menu.dishes = dishesResult.rows;
+        } else {
+            menu.dishes = [];
+        }
+        console.log(`Найдено меню с ${dishIds.length} блюдами`);
+        res.json(menu);
+    } catch (err) {
+        console.error('Ошибка загрузки меню:', err);
+        res.status(500).json({ 
+            error: 'Ошибка загрузки меню', 
+            details: err.message 
+        });
+    }
+});
+
+//создать или обновить меню на дату
+app.post('/api/daily_menus', async (req, res) => {
+    try {
+        const { date, dishIds } = req.body;
+        console.log(`Создание/обновление меню на ${date}:`, dishIds);
+        
+        // Проверка формата даты
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(date)) {
+            return res.status(400).json({ error: 'Неверный формат даты. Используйте YYYY-MM-DD' });
+        }
+        
+        // Проверка dishIds
+        if (!Array.isArray(dishIds)) {
+            return res.status(400).json({ error: 'dishIds должен быть массивом' });
+        }
+        
+        if (dishIds.length > 5) {
+            return res.status(400).json({ error: 'Максимум 5 блюд в меню дня' });
+        }
+        
+        // Проверяем существование блюд
+        if (dishIds.length > 0) {
+            const placeholders = dishIds.map((_, i) => `$${i + 1}`).join(',');
+            const checkQuery = `SELECT id FROM dishes WHERE id IN (${placeholders})`;
+            const checkResult = await pool.query(checkQuery, dishIds);
+            
+            if (checkResult.rows.length !== dishIds.length) {
+                return res.status(400).json({ 
+                    error: 'Некоторые блюда не найдены',
+                    foundIds: checkResult.rows.map(r => r.id)
+                });
+            }
+        }
+        
+        // Проверяем существующее меню
+        const existingResult = await pool.query(
+            'SELECT * FROM daily_menus WHERE date_str = $1',
+            [date]
+        );
+        
+        let result;
+        if (existingResult.rows.length === 0) {
+            // Создаем новое меню
+            result = await pool.query(
+                `INSERT INTO daily_menus (menu_date, date_str, dishes_of_day, generated_at)
+                 VALUES ($1, $2, $3::jsonb, NOW())
+                 RETURNING *`,
+                [date, date, JSON.stringify(dishIds)]
+            );
+            console.log(`Создано новое меню на ${date}`);
+        } else {
+            // Обновляем существующее меню
+            result = await pool.query(
+                `UPDATE daily_menus 
+                 SET dishes_of_day = $1::jsonb, 
+                     generated_at = NOW()
+                 WHERE date_str = $2
+                 RETURNING *`,
+                [JSON.stringify(dishIds), date]
+            );
+            console.log(`Обновлено меню на ${date}`);
+        }
+        
+        res.json({
+            success: true,
+            menu: result.rows[0],
+            message: existingResult.rows.length === 0 ? 'Меню создано' : 'Меню обновлено'
+        });
+    } catch (err) {
+        console.error('Ошибка сохранения меню ', err);
+        res.status(500).json({
+            error: 'Ошибка сохранения меню',
+            details: err.message,
+            stack: err.stack
+        });
+    }
+});
+
+//удалить меню на дату
+app.delete('/api/daily_menus/:date', async (req, res) => {
+    try {
+        const {date} = req.params;
+        console.log(`Удаление меню на дату ${date}`);
+        const result = await pool.query(
+            'DELETE FROM daily_menus WHERE date_str = $1 RETURNING date_str',
+            [date]
+        );
+
+        if (result.eow.length === 0) {
+            console.log(`Меню на ${date} не найдено`);
+            return res.status(400).json({error: 'Меню не найдено'});
+        }
+
+        console.log(`Меню на ${date} удалено`);
+        res.json({
+            success: true,
+            message: 'Меню удалено',
+            date: result.row[0].date_str
+        });
+
+    } catch (err) {
+        console.error('Ошибка удаления меню ', err);
+        res.status(500).json({
+            error: 'Ошибка удаления меню',
+            details: err.message
+        });
+    }
+});
+
 
 //АДМИН АУТЕНТИФИКАЦИЯ
 app.post('/api/admin/login', async (req, res) => {

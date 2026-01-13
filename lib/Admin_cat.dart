@@ -57,13 +57,6 @@ class _AdminCatScreenState extends State<AdminCatScreen> {
     print('Сохраняем кота, ID: $_editingCatId');
     print('Данные: имя=${_nameController.text}, пол=${_genderController.text}');
 
-    if (_nameController.text.isEmpty || _genderController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Заполните обязательные поля')),
-      );
-      return;
-    }
-
     final catData = {
       'name': _nameController.text,
       'gender': _genderController.text,
@@ -194,7 +187,7 @@ class _AdminCatScreenState extends State<AdminCatScreen> {
                   TextField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      labelText: 'Имя кота*',
+                      labelText: 'Имя кота',
                       border: OutlineInputBorder(),
                     ),
                   ),
@@ -202,7 +195,7 @@ class _AdminCatScreenState extends State<AdminCatScreen> {
                   TextField(
                     controller: _genderController,
                     decoration: const InputDecoration(
-                      labelText: 'Пол* (самец/самка)',
+                      labelText: 'Пол (самец/самка)',
                       border: OutlineInputBorder(),
                     ),
                   ),
