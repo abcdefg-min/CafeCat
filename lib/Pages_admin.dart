@@ -47,8 +47,10 @@ class _AdminScreenState extends State<AdminScreen> {
         });
       }
     } catch (e) {
+      print('Ошибка сети: $e');
+      print('URL: http://localhost:3000/api/admin/login');
       setState(() {
-        _error = 'Ошибка сети';
+        _error = 'Ошибка сети: ${e.toString()}';
       });
     }
   }
@@ -89,23 +91,23 @@ class _AdminScreenState extends State<AdminScreen> {
 
               SizedBox(height: 30),
               ElevatedButton(
-                      onPressed: _login,
-                      style: ElevatedButton.styleFrom(
-                        textStyle: TextStyle(fontSize: 23),
-                        backgroundColor: Color(0xFF3A2B28),
-                        elevation: 5,
-                        padding: EdgeInsets.only(
-                          top: 20,
-                          bottom: 20,
-                          left: 40,
-                          right: 40,
-                        ),
-                      ),
-                      child: Text(
-                        'ДАЛЕЕ',
-                        style: TextStyle(color: Color.fromARGB(255, 255, 252, 231),),
-                      ),
-                    ),
+                onPressed: _login,
+                style: ElevatedButton.styleFrom(
+                  textStyle: TextStyle(fontSize: 23),
+                  backgroundColor: Color(0xFF3A2B28),
+                  elevation: 5,
+                  padding: EdgeInsets.only(
+                    top: 20,
+                    bottom: 20,
+                    left: 40,
+                    right: 40,
+                  ),
+                ),
+                child: Text(
+                  'ДАЛЕЕ',
+                  style: TextStyle(color: Color.fromARGB(255, 255, 252, 231)),
+                ),
+              ),
               if (_error != null) ...[
                 SizedBox(height: 10),
                 Text(_error!, style: TextStyle(color: Colors.red)),

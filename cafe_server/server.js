@@ -807,7 +807,7 @@ app.delete('/api/daily_menus/:date', async (req, res) => {
 });
 
 
-//АДМИН АУТЕНТИФИКАЦИЯ
+//АДМИН АУТЕНТИФИКАЦИЯ--------------------------------------------------------
 app.post('/api/admin/login', async (req, res) => {
     try {
         const { email } = req.body;
